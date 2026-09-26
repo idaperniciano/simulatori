@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheda: Notazione Scientifica</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Sfondo neutro */
+        }
+
+        .math-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Rimuove freccette native dagli input numerici se usati (anche se useremo text per controllare le virgole) */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        .tab-btn {
+            transition: all 0.2s;
+        }
+        
+        .feedback-icon {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Intestazione e Navigazione -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+            <h1 class="text-3xl font-bold text-slate-800 mb-2 mt-2">Allenamento: Notazione Scientifica</h1>
+            <p class="text-slate-500 mb-6 text-sm">Ricorda: la mantissa deve essere un numero compreso tra 1 (incluso) e 10 (escluso). Usa sempre la virgola.</p>
+            
+            <div class="flex justify-center gap-2 md:gap-4 flex-wrap">
+                <button id="tab1-btn" onclick="switchTab(1)" class="tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-blue-100 text-blue-700 border-2 border-blue-200 shadow-sm">
+                    Da Estesa a Scientifica
+                </button>
+                <button id="tab2-btn" onclick="switchTab(2)" class="tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-slate-50 text-slate-500 border-2 border-transparent hover:bg-slate-100">
+                    Da Scientifica a Estesa
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenitore Esercizi -->
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+            
+            <!-- TAB 1: Estesa -> Scientifica -->
+            <div id="tab1-content" class="flex flex-col gap-5">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-2">
+                    <h2 class="text-lg font-bold text-slate-700 uppercase tracking-wide">Traduci in Notazione Scientifica</h2>
+                </div>
+                <div id="tab1-rows" class="flex flex-col gap-4">
+                    <!-- Popolato da JS -->
+                </div>
+            </div>
+
+            <!-- TAB 2: Scientifica -> Estesa -->
+            <div id="tab2-content" class="flex flex-col gap-5 hidden">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-2">
+                    <h2 class="text-lg font-bold text-slate-700 uppercase tracking-wide">Traduci in Forma Estesa (Decimale)</h2>
+                </div>
+                <div id="tab2-rows" class="flex flex-col gap-4">
+                    <!-- Popolato da JS -->
+                </div>
+            </div>
+
+            <!-- Error Feedback Box -->
+            <div id="error-message" class="hidden mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                <!-- Messaggi di errore specifici -->
+            </div>
+
+            <!-- Pulsanti Azione -->
+            <div class="mt-8 flex flex-col md:flex-row gap-4 border-t border-slate-100 pt-6">
+                <button onclick="verifyAnswers()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    VERIFICA RISPOSTE
+                </button>
+                <button onclick="generateData()" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-6 rounded-xl border border-blue-200 transition-colors flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    GENERA NUOVA SCHEDA
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Grandezze fisiche contestualizzate
+        const units = ['kg', 'g', 'mg', 'L', 'mL', 'J', 'kJ', 'W', 'kW', 'ha', 'm', 'cm', 'mm'];
+        
+        let tab1Data = [];
+        let tab2Data = [];
+        let currentTab = 1;
+
+        // ==========================================
+        // GESTIONE DEL FORMATO (Blocco Punto -> Virgola)
+        // ==========================================
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+                let val = e.target.value;
+                // Se digita un punto, forzalo a virgola
+                if (val.includes('.')) {
+                    val = val.replace(/\./g, ',');
+                }
+                // Rimuovi caratteri non validi (consenti numeri, virgola, meno, e spazi per separare le migliaia)
+                val = val.replace(/[^\d,\- ]/g, '');
+                
+                // Il meno può stare solo all'inizio (per gli esponenti)
+                if (val.indexOf('-') > 0) {
+                    val = val.replace(/-/g, '');
+                }
+
+                e.target.value = val;
+                
+                // Rimuovi colori di errore appena l'utente digita
+                e.target.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+            }
+        });
+
+        // ==========================================
+        // GENERATORE DATI ESATTI (Senza bug di float JS)
+        // ==========================================
+        function createRandomScientificNumber() {
+            // Genera la mantissa: es. base intera da 11 a 99 per avere 1,1 a 9,9
+            let mInt = Math.floor(Math.random() * 89) + 11; 
+            if (mInt % 10 === 0) mInt += 1; // Evitiamo lo zero finale (es 4,0) per semplicità grafica
+            
+            let mantissaFloat = mInt / 10;
+            let mantissaStr = (mInt.toString().substring(0, 1) + "," + mInt.toString().substring(1)); // es. "4,5"
+            
+            // Genera esponente (evitiamo -1, 0, 1 per costringerli a usare bene la notazione)
+            const exps = [-6, -5, -4, -3, -2, 2, 3, 4, 5, 6, 7];
+            let exp = exps[Math.floor(Math.random() * exps.length)];
+
+            // Costruiamo la stringa estesa a mano per evitare bug di approssimazione
+            let extendedStr = "";
+            if (exp > 0) {
+                // Se exp = 3 e mInt = 45 (ovvero 4,5), aggiungo (3 - 1) = 2 zeri
+                extendedStr = mInt.toString() + "0".repeat(exp - 1);
+            } else {
+                // Se exp = -3 e mInt = 45, aggiungo |-3| - 1 = 2 zeri prima
+                let numZeros = Math.abs(exp) - 1;
+                extendedStr = "0," + "0".repeat(numZeros) + mInt.toString();
+            }
+
+            // Valore numerico per controlli matematici
+            let floatValue = parseFloat(mantissaFloat + "e" + exp);
+            let unit = units[Math.floor(Math.random() * units.length)];
+
+            return { mantissaStr, exp, extendedStr, floatValue, unit, mantissaFloat };
+        }
+
+        // ==========================================
+        // RENDERING INTERFACCIA
+        // ==========================================
+        function generateData() {
+            const container1 = document.getElementById('tab1-rows');
+            const container2 = document.getElementById('tab2-rows');
+            container1.innerHTML = '';
+            container2.innerHTML = '';
+            tab1Data = [];
+            tab2Data = [];
+
+            // Pulisce l'errore box
+            document.getElementById('error-message').classList.add('hidden');
+            document.getElementById('error-message').innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                // Dati Tab 1
+                let d1 = createRandomScientificNumber();
+                tab1Data.push(d1);
+                
+                // Formatta il numero esteso con spazi per le migliaia visivamente (opzionale, ma aiuta)
+                let visualExtended = d1.extendedStr;
+                if (!d1.extendedStr.includes(',')) {
+                    // Inserisci spazio ogni 3 cifre da destra
+                    visualExtended = d1.extendedStr.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                }
+
+                container1.innerHTML += `
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="w-full md:w-5/12 text-right font-bold text-slate-700 text-lg math-font">
+                            ${visualExtended} ${d1.unit} <span class="text-slate-400 mx-2">=</span>
+                        </div>
+                        <div class="w-full md:w-7/12 flex items-center gap-2">
+                            <input type="text" id="t1-m-${i}" class="math-font text-center border-2 border-slate-300 rounded-lg p-2 w-20 focus:border-blue-500 outline-none transition-colors" placeholder="es. 4,5">
+                            <span class="font-bold text-slate-500">&times; 10<sup class="text-sm">^</sup></span>
+                            <input type="text" id="t1-e-${i}" class="math-font text-center border-2 border-slate-300 rounded-lg p-2 w-16 focus:border-blue-500 outline-none transition-colors" placeholder="es. 3">
+                            <span class="ml-1 font-bold text-slate-600">${d1.unit}</span>
+                            <span id="t1-icon-${i}" class="feedback-icon text-xl ml-auto"></span>
+                        </div>
+                    </div>
+                `;
+
+                // Dati Tab 2
+                let d2 = createRandomScientificNumber();
+                tab2Data.push(d2);
+                container2.innerHTML += `
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="w-full md:w-5/12 text-right font-bold text-slate-700 text-lg math-font">
+                            ${d2.mantissaStr} &times; 10<sup class="text-sm">${d2.exp}</sup> ${d2.unit} <span class="text-slate-400 mx-2">=</span>
+                        </div>
+                        <div class="w-full md:w-7/12 flex items-center gap-2">
+                            <input type="text" id="t2-ext-${i}" class="math-font border-2 border-slate-300 rounded-lg p-2 w-full max-w-[200px] focus:border-blue-500 outline-none transition-colors" placeholder="Scrivi per esteso">
+                            <span class="font-bold text-slate-600">${d2.unit}</span>
+                            <span id="t2-icon-${i}" class="feedback-icon text-xl ml-auto"></span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ==========================================
+        // LOGICA DI VERIFICA
+        // ==========================================
+        function verifyAnswers() {
+            let allCorrect = true;
+            let errors = [];
+
+            if (currentTab === 1) {
+                // Controllo TAB 1: Estesa -> Scientifica
+                for (let i = 0; i < 5; i++) {
+                    let mInput = document.getElementById(`t1-m-${i}`);
+                    let eInput = document.getElementById(`t1-e-${i}`);
+                    let icon = document.getElementById(`t1-icon-${i}`);
+                    let data = tab1Data[i];
+
+                    let userMStr = mInput.value.replace(/\s/g, ''); // Rimuove spazi vuoti
+                    let userEStr = eInput.value.replace(/\s/g, '');
+
+                    // Converti in formato matematico per il calcolo
+                    let userM = parseFloat(userMStr.replace(',', '.'));
+                    let userE = parseInt(userEStr);
+
+                    mInput.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+                    eInput.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+
+                    if (isNaN(userM) || isNaN(userE)) {
+                        allCorrect = false;
+                        icon.innerHTML = '⚠️';
+                        mInput.classList.add('border-red-400', 'bg-red-50');
+                        eInput.classList.add('border-red-400', 'bg-red-50');
+                        continue;
+                    }
+
+                    // 1. Regola Scientifica (La mantissa deve essere 1 <= m < 10)
+                    let isScientificForm = (Math.abs(userM) >= 1 && Math.abs(userM) < 10);
+                    
+                    // 2. Correttezza Matematica
+                    let userFloatValue = userM * Math.pow(10, userE);
+                    // Uso epsilon per i bug di float
+                    let isMathCorrect = Math.abs(userFloatValue - data.floatValue) < (data.floatValue * 1e-5);
+
+                    if (isMathCorrect && isScientificForm) {
+                        icon.innerHTML = '✅';
+                        mInput.classList.add('border-green-400', 'bg-green-50');
+                        eInput.classList.add('border-green-400', 'bg-green-50');
+                    } else {
+                        allCorrect = false;
+                        icon.innerHTML = '❌';
+                        if (!isScientificForm) {
+                            mInput.classList.add('border-red-400', 'bg-red-50');
+                            if (!errors.includes("Mantissa errata: ricorda che il primo numero deve essere compreso tra 1 e 9,99...")) {
+                                errors.push("Mantissa errata: ricorda che il primo numero deve essere compreso tra 1 e 9,99...");
+                            }
+                        } else {
+                            mInput.classList.add('border-red-400', 'bg-red-50');
+                            eInput.classList.add('border-red-400', 'bg-red-50');
+                        }
+                    }
+                }
+            } else {
+                // Controllo TAB 2: Scientifica -> Estesa
+                for (let i = 0; i < 5; i++) {
+                    let extInput = document.getElementById(`t2-ext-${i}`);
+                    let icon = document.getElementById(`t2-icon-${i}`);
+                    let data = tab2Data[i];
+
+                    // Pulisco l'input rimuovendo gli spazi (così tolleriamo "45 000" o "45000")
+                    let userStr = extInput.value.replace(/\s/g, '');
+                    
+                    extInput.classList.remove('border-red-400', 'bg-red-50', 'border-green-400', 'bg-green-50');
+
+                    if (userStr === "") {
+                        allCorrect = false;
+                        icon.innerHTML = '⚠️';
+                        extInput.classList.add('border-red-400', 'bg-red-50');
+                        continue;
+                    }
+
+                    // Confronto Matematico (convertendo la stringa dell'utente con la virgola in float)
+                    let userFloat = parseFloat(userStr.replace(',', '.'));
+                    
+                    if (!isNaN(userFloat) && Math.abs(userFloat - data.floatValue) < (data.floatValue * 1e-5)) {
+                        icon.innerHTML = '✅';
+                        extInput.classList.add('border-green-400', 'bg-green-50');
+                    } else {
+                        allCorrect = false;
+                        icon.innerHTML = '❌';
+                        extInput.classList.add('border-red-400', 'bg-red-50');
+                        if (userFloat > data.floatValue) {
+                            if (!errors.includes("Attento agli zeri in eccesso.")) errors.push("Attento agli zeri in eccesso.");
+                        } else {
+                            if (!errors.includes("Attento: mancano degli zeri o la virgola è nel posto sbagliato.")) errors.push("Attento: mancano degli zeri o la virgola è nel posto sbagliato.");
+                        }
+                    }
+                }
+            }
+
+            // Stampa Box Errori (se ce ne sono)
+            const errorBox = document.getElementById('error-message');
+            if (!allCorrect && errors.length > 0) {
+                errorBox.innerHTML = "<p class='font-bold mb-1'>Suggerimenti per la correzione:</p><ul class='list-disc pl-5'>" + errors.map(e => `<li>${e}</li>`).join('') + "</ul>";
+                errorBox.classList.remove('hidden');
+            } else {
+                errorBox.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // TRANSIZIONI TAB
+        // ==========================================
+        function switchTab(tabNum) {
+            currentTab = tabNum;
+            const btn1 = document.getElementById('tab1-btn');
+            const btn2 = document.getElementById('tab2-btn');
+            const c1 = document.getElementById('tab1-content');
+            const c2 = document.getElementById('tab2-content');
+            const errorBox = document.getElementById('error-message');
+
+            errorBox.classList.add('hidden');
+
+            if (tabNum === 1) {
+                btn1.className = 'tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-blue-100 text-blue-700 border-2 border-blue-200 shadow-sm';
+                btn2.className = 'tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-slate-50 text-slate-500 border-2 border-transparent hover:bg-slate-100';
+                c1.classList.remove('hidden');
+                c2.classList.add('hidden');
+            } else {
+                btn2.className = 'tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-blue-100 text-blue-700 border-2 border-blue-200 shadow-sm';
+                btn1.className = 'tab-btn px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold md:text-lg bg-slate-50 text-slate-500 border-2 border-transparent hover:bg-slate-100';
+                c2.classList.remove('hidden');
+                c1.classList.add('hidden');
+            }
+        }
+
+        // Init
+        window.onload = generateData;
+    </script>
+</body>
+</html>
