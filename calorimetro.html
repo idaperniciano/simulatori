@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Termologia: Equilibrio Termico</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Stile personalizzato per gli slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #475569;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]:disabled::-webkit-slider-thumb {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        input[type=range]:disabled::-webkit-slider-runnable-track {
+            background: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 text-slate-800 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Intestazione -->
+        <header class="text-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-3xl font-bold text-slate-900">Calorimetro Virtuale</h1>
+            <p class="text-slate-500 mt-1">Esplora l'equilibrio termico e lo scambio di calore tra due sostanze</p>
+        </header>
+
+        <!-- Griglia Principale -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- PANNELLO CONTROLLI (Sinistra) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <!-- SOSTANZA 1 -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 border-t-4 border-t-indigo-500">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
+                        Sostanza 1
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Materiale</label>
+                            <select id="mat1" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 shadow-sm">
+                                <option value="4186">Acqua (4186 J/kg·°C)</option>
+                                <option value="2000">Olio d'oliva (2000 J/kg·°C)</option>
+                                <option value="900">Alluminio (900 J/kg·°C)</option>
+                                <option value="800">Terriccio (800 J/kg·°C)</option>
+                                <option value="385">Rame (385 J/kg·°C)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Massa (m₁)</span>
+                                <span id="lbl-m1" class="text-indigo-600 font-mono">1.0 kg</span>
+                            </label>
+                            <input type="range" id="m1" min="0.1" max="10" value="1" step="0.1">
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Temperatura Iniziale (T₁)</span>
+                                <span id="lbl-t1" class="text-indigo-600 font-mono">20 °C</span>
+                            </label>
+                            <input type="range" id="t1" min="-20" max="150" value="20" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SOSTANZA 2 -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 border-t-4 border-t-emerald-500">
+                    <h2 class="text-xl font-bold text-emerald-700 mb-4 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-800 w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
+                        Sostanza 2
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Materiale</label>
+                            <select id="mat2" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2.5 shadow-sm">
+                                <option value="4186">Acqua (4186 J/kg·°C)</option>
+                                <option value="2000">Olio d'oliva (2000 J/kg·°C)</option>
+                                <option value="900" selected>Alluminio (900 J/kg·°C)</option>
+                                <option value="800">Terriccio (800 J/kg·°C)</option>
+                                <option value="385">Rame (385 J/kg·°C)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Massa (m₂)</span>
+                                <span id="lbl-m2" class="text-emerald-600 font-mono">2.0 kg</span>
+                            </label>
+                            <input type="range" id="m2" min="0.1" max="10" value="2" step="0.1">
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Temperatura Iniziale (T₂)</span>
+                                <span id="lbl-t2" class="text-emerald-600 font-mono">80 °C</span>
+                            </label>
+                            <input type="range" id="t2" min="-20" max="150" value="80" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PULSANTE AVVIO -->
+                <button id="btn-start" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 text-lg flex justify-center items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    MESCOLA / AVVIA SIMULAZIONE
+                </button>
+
+            </div>
+
+            <!-- AREA VISUALIZZAZIONE E RISULTATI (Destra) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- GRAFICO -->
+                <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2 border-b pb-2">Grafico Temperatura - Tempo</h3>
+                    <div class="chart-container">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- PANNELLO RIASSUNTIVO RISULTATI -->
+                <div id="results-panel" class="bg-slate-800 text-white p-6 rounded-2xl shadow-md border border-slate-700 hidden">
+                    <h3 class="text-xl font-bold text-slate-100 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Risultati dello Scambio Termico
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <!-- Temp Equilibrio -->
+                        <div class="bg-slate-700 p-4 rounded-xl text-center border border-slate-600">
+                            <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">Temp. Equilibrio (Tₑ)</div>
+                            <div class="text-3xl font-bold font-mono text-amber-400"><span id="out-te">--</span> °C</div>
+                        </div>
+                        <!-- Calore Scambiato -->
+                        <div class="bg-slate-700 p-4 rounded-xl text-center border border-slate-600 md:col-span-2">
+                            <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">Calore Scambiato (|Q|)</div>
+                            <div class="text-3xl font-bold font-mono text-sky-300"><span id="out-q">--</span> J</div>
+                        </div>
+                    </div>
+
+                    <!-- Spiegazione Dinamica -->
+                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-slate-200 space-y-3">
+                        <div class="flex items-start gap-3" id="msg-cede">
+                            <div class="mt-1 bg-red-500/20 text-red-400 p-1.5 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div>
+                                <p class="font-bold text-red-400">Chi cede calore?</p>
+                                <p class="text-sm" id="txt-cede">--</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3" id="msg-assorbe">
+                            <div class="mt-1 bg-blue-500/20 text-blue-400 p-1.5 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                            </div>
+                            <div>
+                                <p class="font-bold text-blue-400">Chi assorbe calore?</p>
+                                <p class="text-sm" id="txt-assorbe">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const els = {
+            mat1: document.getElementById('mat1'),
+            m1: document.getElementById('m1'),
+            t1: document.getElementById('t1'),
+            lblM1: document.getElementById('lbl-m1'),
+            lblT1: document.getElementById('lbl-t1'),
+            
+            mat2: document.getElementById('mat2'),
+            m2: document.getElementById('m2'),
+            t2: document.getElementById('t2'),
+            lblM2: document.getElementById('lbl-m2'),
+            lblT2: document.getElementById('lbl-t2'),
+            
+            btnStart: document.getElementById('btn-start'),
+            resultsPanel: document.getElementById('results-panel'),
+            
+            outTe: document.getElementById('out-te'),
+            outQ: document.getElementById('out-q'),
+            txtCede: document.getElementById('txt-cede'),
+            txtAssorbe: document.getElementById('txt-assorbe')
+        };
+
+        // Costanti Simulazione
+        const SIM_TIME_MAX = 20; // Secondi simulati
+        const SIM_STEPS = 100;
+        let animationInterval = null;
+        let chartInstance = null;
+
+        // Inizializza Chart.js
+        function initChart() {
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Sostanza 1',
+                            data: [],
+                            borderColor: '#6366f1', // Indigo 500 default
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Sostanza 2',
+                            data: [],
+                            borderColor: '#10b981', // Emerald 500 default
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Disabilitato per aggiornamento frame by frame fluido
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: 'Tempo (s)', font: {weight: 'bold'} },
+                            min: 0,
+                            max: SIM_TIME_MAX,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Temperatura (°C)', font: {weight: 'bold'} },
+                            // min e max calcolati dinamicamente
+                            grid: { color: '#e2e8f0' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' °C';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- STREAMING_CHUNK:Logica Fisica e Eventi... ---
+        
+        // Aggiorna etichette slider
+        function updateLabels() {
+            els.lblM1.textContent = parseFloat(els.m1.value).toFixed(1) + ' kg';
+            els.lblT1.textContent = els.t1.value + ' °C';
+            els.lblM2.textContent = parseFloat(els.m2.value).toFixed(1) + ' kg';
+            els.lblT2.textContent = els.t2.value + ' °C';
+        }
+
+        [els.m1, els.t1, els.m2, els.t2].forEach(el => {
+            el.addEventListener('input', updateLabels);
+        });
+
+        function toggleInputs(disabled) {
+            [els.mat1, els.m1, els.t1, els.mat2, els.m2, els.t2, els.btnStart].forEach(el => {
+                el.disabled = disabled;
+            });
+            if(disabled) {
+                els.btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+                els.btnStart.innerHTML = 'Simulazione in corso...';
+            } else {
+                els.btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+                els.btnStart.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg> RI-MESCOLA`;
+            }
+        }
+
+        // Funzione per ricavare il nome del materiale
+        function getMaterialName(selectElement) {
+            return selectElement.options[selectElement.selectedIndex].text.split(' (')[0];
+        }
+
+        // Avvio Simulazione
+        function startSimulation() {
+            if(animationInterval) clearInterval(animationInterval);
+            
+            // 1. Lettura Dati
+            const c1 = parseFloat(els.mat1.value);
+            const m1 = parseFloat(els.m1.value);
+            const T1 = parseFloat(els.t1.value);
+            const name1 = getMaterialName(els.mat1);
+            
+            const c2 = parseFloat(els.mat2.value);
+            const m2 = parseFloat(els.m2.value);
+            const T2 = parseFloat(els.t2.value);
+            const name2 = getMaterialName(els.mat2);
+
+            // 2. Calcoli Fisici Teorici
+            // Te = (m1*c1*T1 + m2*c2*T2) / (m1*c1 + m2*c2)
+            const num = (m1 * c1 * T1) + (m2 * c2 * T2);
+            const den = (m1 * c1) + (m2 * c2);
+            const Te = num / den;
+            
+            // Calore Scambiato |Q| = m * c * |Te - T|
+            const Q = Math.abs(m1 * c1 * (Te - T1));
+
+            // 3. Preparazione Interfaccia Risultati
+            els.resultsPanel.classList.remove('hidden');
+            els.outTe.textContent = Te.toFixed(1);
+            els.outQ.textContent = Math.round(Q).toLocaleString('it-IT');
+
+            // Determina chi cede e chi assorbe
+            if (T1 > T2) {
+                els.txtCede.innerHTML = `<strong>Sostanza 1 (${name1})</strong>, poiché parte da ${T1}°C (più calda). Si raffredda fino a ${Te.toFixed(1)}°C.`;
+                els.txtAssorbe.innerHTML = `<strong>Sostanza 2 (${name2})</strong>, poiché parte da ${T2}°C (più fredda). Si riscalda fino a ${Te.toFixed(1)}°C.`;
+                
+                // Colori Grafico Dinamici (Rosso a chi è caldo, Blu a chi è freddo)
+                chartInstance.data.datasets[0].borderColor = '#ef4444'; // Red per 1
+                chartInstance.data.datasets[1].borderColor = '#3b82f6'; // Blue per 2
+            } else if (T2 > T1) {
+                els.txtCede.innerHTML = `<strong>Sostanza 2 (${name2})</strong>, poiché parte da ${T2}°C (più calda). Si raffredda fino a ${Te.toFixed(1)}°C.`;
+                els.txtAssorbe.innerHTML = `<strong>Sostanza 1 (${name1})</strong>, poiché parte da ${T1}°C (più fredda). Si riscalda fino a ${Te.toFixed(1)}°C.`;
+                
+                chartInstance.data.datasets[0].borderColor = '#3b82f6'; // Blue per 1
+                chartInstance.data.datasets[1].borderColor = '#ef4444'; // Red per 2
+            } else {
+                els.txtCede.innerHTML = `Le due sostanze sono già alla stessa temperatura.`;
+                els.txtAssorbe.innerHTML = `Non c'è scambio di calore.`;
+                chartInstance.data.datasets[0].borderColor = '#64748b';
+                chartInstance.data.datasets[1].borderColor = '#94a3b8';
+            }
+
+            chartInstance.data.datasets[0].label = `Sostanza 1 (${name1})`;
+            chartInstance.data.datasets[1].label = `Sostanza 2 (${name2})`;
+
+            // 4. Preparazione Grafico
+            // Scala Y dinamica con un po' di padding
+            const minT = Math.min(T1, T2);
+            const maxT = Math.max(T1, T2);
+            chartInstance.options.scales.y.min = Math.floor(minT - 10);
+            chartInstance.options.scales.y.max = Math.ceil(maxT + 10);
+            
+            // Resetta i dati
+            chartInstance.data.datasets[0].data = [];
+            chartInstance.data.datasets[1].data = [];
+            chartInstance.update();
+
+            // 5. Animazione (Curva di decadimento esponenziale di Newton)
+            toggleInputs(true);
+            
+            let currentStep = 0;
+            const k = 0.25; // Costante arbitraria per la velocità visiva della curva
+            const dt = SIM_TIME_MAX / SIM_STEPS;
+
+            animationInterval = setInterval(() => {
+                const t = currentStep * dt;
+                
+                // Formula: T(t) = Te + (T_iniziale - Te) * e^(-kt)
+                const currentT1 = Te + (T1 - Te) * Math.exp(-k * t);
+                const currentT2 = Te + (T2 - Te) * Math.exp(-k * t);
+
+                chartInstance.data.datasets[0].data.push({ x: t, y: currentT1 });
+                chartInstance.data.datasets[1].data.push({ x: t, y: currentT2 });
+                chartInstance.update();
+
+                currentStep++;
+
+                if (currentStep > SIM_STEPS) {
+                    clearInterval(animationInterval);
+                    toggleInputs(false); // Riabilita controlli alla fine
+                }
+            }, 30); // 30ms per frame = animazione di ~3 secondi
+        }
+
+        els.btnStart.addEventListener('click', startSimulation);
+
+        // INIT
+        window.onload = () => {
+            updateLabels();
+            initChart();
+        };
+    </script>
+</body>
+</html>

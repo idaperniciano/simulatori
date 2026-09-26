@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lettura del Dinamometro: La Regola della Sensibilità</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+
+        /* Styling Slider per LIM (Touch friendly) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 15px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #0284c7; /* Sky 600 */
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Contenitore Canvas per la scala */
+        #canvas-wrapper {
+            width: 100%;
+            height: 600px;
+            background-color: #ffffff;
+            position: relative;
+            background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px);
+            background-size: 20px 20px;
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-6 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Header -->
+        <header class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Laboratorio Dinamometro</h1>
+                <p class="text-slate-500 mt-1">Impara a quantizzare la misura in base alla sensibilità dello strumento.</p>
+            </div>
+            <div class="px-5 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 font-semibold shadow-inner">
+                Regola: <span class="font-mono">Misura = Multiplo della Sensibilità</span>
+            </div>
+        </header>
+
+        <!-- Layout Griglia Principale -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- PANNELLO CONTROLLI E INPUT (Sinistra) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-5">
+                    
+                    <!-- 1. Scelta Strumento -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">1. Configura lo Strumento</label>
+                        <select id="select-dyno" class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-xl focus:ring-sky-500 focus:border-sky-500 block p-3 shadow-sm font-medium text-lg">
+                            <option value="0">Portata: 1 N | Sensibilità: 0.02 N</option>
+                            <option value="1">Portata: 2 N | Sensibilità: 0.02 N</option>
+                            <option value="2">Portata: 5 N | Sensibilità: 0.1 N</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Slider Massa -->
+                    <div class="bg-sky-50 p-5 rounded-xl border border-sky-100 mt-2">
+                        <label class="flex justify-between text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                            <span>2. Carico Applicato (Massa)</span>
+                            <span id="lbl-mass" class="text-sky-700 mono-font text-xl">0.0 g</span>
+                        </label>
+                        <input type="range" id="slider-mass" min="0" max="100" value="0" step="0.5">
+                        <div class="flex justify-between text-xs text-sky-600/70 mono-font font-bold mt-2">
+                            <span>0 g</span>
+                            <span id="lbl-max-mass">Max</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 my-2"></div>
+
+                    <!-- 3. Inserimento Misura -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">3. Esegui la Lettura</label>
+                        <p class="text-sm text-slate-600 mb-4">
+                            Osserva l'indice rosso. <strong>Attenzione:</strong> scrivi il valore corrispondente alla tacca più vicina.
+                        </p>
+                        
+                        <div class="flex items-center gap-3">
+                            <input type="number" id="input-reading" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-xl focus:ring-sky-500 focus:border-sky-500 block p-4 text-3xl text-center mono-font shadow-inner font-bold placeholder-slate-300" placeholder="0.00">
+                            <span class="text-3xl font-bold text-slate-400">N</span>
+                        </div>
+                    </div>
+
+                    <!-- Pulsante Verifica -->
+                    <button id="btn-verify" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform transition active:scale-95 text-lg flex justify-center items-center gap-2 mt-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        VERIFICA MISURA
+                    </button>
+
+                    <!-- Area Feedback Dinamico -->
+                    <div id="feedback-panel" class="hidden p-4 rounded-xl border mt-2">
+                        <!-- Popolato via JS -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- AREA VISUALIZZAZIONE CANVAS (Destra) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden relative flex flex-col h-full">
+                    
+                    <!-- Top Bar Canvas -->
+                    <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-slate-600">
+                        <span class="font-bold uppercase tracking-wide text-sm">Vista Strumento</span>
+                        <div class="flex gap-3">
+                            <span class="mono-font text-sm bg-white border border-slate-300 shadow-sm px-3 py-1.5 rounded-lg font-bold" id="badge-max">Portata: --</span>
+                            <span class="mono-font text-sm bg-blue-100 border border-blue-300 text-blue-800 shadow-sm px-3 py-1.5 rounded-lg font-bold" id="badge-sens">Sensibilità: --</span>
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div id="canvas-wrapper" class="flex-grow">
+                        <canvas id="simCanvas"></canvas>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const g = 9.81; // Accelerazione di gravità
+
+        // Configurazione dei dinamometri
+        const dynos = [
+            { 
+                id: 0, 
+                maxN: 1, 
+                sens: 0.02, 
+                mainTick: 0.1,    // Etichetta ogni 0.1 N
+                midTick: 0.05,    // Tacca media
+                decimals: 2       // Decimali da usare per i check
+            },
+            { 
+                id: 1, 
+                maxN: 2, 
+                sens: 0.02, 
+                mainTick: 0.2,    // Etichetta ogni 0.2 N
+                midTick: 0.1,     
+                decimals: 2
+            },
+            { 
+                id: 2, 
+                maxN: 5, 
+                sens: 0.1, 
+                mainTick: 1.0,    // Etichetta ogni 1 N
+                midTick: 0.5,
+                decimals: 1
+            }
+        ];
+        
+        const els = {
+            selectDyno: document.getElementById('select-dyno'),
+            sliderMass: document.getElementById('slider-mass'),
+            lblMass: document.getElementById('lbl-mass'),
+            lblMaxMass: document.getElementById('lbl-max-mass'),
+            inputReading: document.getElementById('input-reading'),
+            btnVerify: document.getElementById('btn-verify'),
+            feedbackPanel: document.getElementById('feedback-panel'),
+            badgeSens: document.getElementById('badge-sens'),
+            badgeMax: document.getElementById('badge-max'),
+            wrapper: document.getElementById('canvas-wrapper'),
+            canvas: document.getElementById('simCanvas')
+        };
+
+        const ctx = els.canvas.getContext('2d');
+
+        let state = {
+            dynIndex: 0,
+            massGrams: 0,
+            F_real: 0,      // Forza esatta continua
+            F_rendered: 0,  // Forza in renderizzazione per l'animazione elastica
+            cw: 0,
+            ch: 0
+        };
+
+        function updatePhysics() {
+            const dyn = dynos[state.dynIndex];
+            
+            // F = m(kg) * g
+            state.F_real = (state.massGrams / 1000) * g;
+            
+            // Limita visivamente al fondo scala (oltre si rompe la molla!)
+            if (state.F_real > dyn.maxN) state.F_real = dyn.maxN;
+
+            els.lblMass.textContent = state.massGrams.toFixed(1) + ' g';
+        }
+
+        function onDynoChange() {
+            hideFeedback();
+            els.inputReading.value = '';
+            
+            state.dynIndex = parseInt(els.selectDyno.value);
+            const dyn = dynos[state.dynIndex];
+            
+            // Portata in grammi = (maxN / g) * 1000
+            const maxMass = (dyn.maxN / g) * 1000;
+            
+            els.sliderMass.max = maxMass;
+            // Imposta lo step dello slider per rendere più fluido il movimento
+            els.sliderMass.step = (maxMass > 250) ? 1 : 0.5;
+            
+            // Randomizza la massa di partenza per sfidare l'alunno
+            state.massGrams = parseFloat((Math.random() * maxMass * 0.85).toFixed(1));
+            els.sliderMass.value = state.massGrams;
+            
+            els.lblMaxMass.textContent = maxMass.toFixed(0) + ' g Max';
+            els.badgeSens.textContent = `Sensibilità: ${dyn.sens} N`;
+            els.badgeMax.textContent = `Portata: ${dyn.maxN} N`;
+            
+            // Setta il placeholder con il numero giusto di decimali
+            els.inputReading.placeholder = (dyn.decimals === 2) ? "0.00" : "0.0";
+            els.inputReading.step = dyn.sens; // Aiuta su mobile coi bottoncini numerici
+            
+            updatePhysics();
+            state.F_rendered = state.F_real; // Snap istantaneo al cambio scala
+            drawCanvas();
+        }
+
+        function onMassChange() {
+            hideFeedback();
+            els.inputReading.classList.remove('border-red-500', 'border-green-500');
+            state.massGrams = parseFloat(els.sliderMass.value);
+            updatePhysics();
+        }
+
+        
+        // Verifica se un valore è multiplo della sensibilità, aggirando gli errori di floating point
+        function isMultipleOfSensitivity(value, sens) {
+            const quotient = value / sens;
+            const rounded = Math.round(quotient);
+            // Se la differenza tra il quoziente esatto e il suo intero più vicino è minima, è un multiplo
+            return Math.abs(quotient - rounded) < 0.001;
+        }
+
+        function verifyMetrology() {
+            const dyn = dynos[state.dynIndex];
+            const userText = els.inputReading.value.replace(',', '.');
+            const userVal = parseFloat(userText);
+            
+            if (isNaN(userVal)) {
+                showFeedback(false, "Inserisci un numero prima di verificare.");
+                return;
+            }
+
+            // 1. IL VALORE DEVE ESSERE UN MULTIPLO DELLA SENSIBILITA'
+            if (!isMultipleOfSensitivity(userVal, dyn.sens)) {
+                els.inputReading.classList.add('border-red-500');
+                showFeedback(false, `
+                    <p class="font-bold text-red-800 text-lg mb-1">❌ Errore Metrologico di Risoluzione</p>
+                    <p>Hai inserito <strong>${userVal} N</strong>.</p>
+                    <p class="mt-2">Questo strumento ha una sensibilità di <strong>${dyn.sens} N</strong>. Significa che non può esistere alcuna misura che non sia un multiplo esatto di ${dyn.sens} (es. 0.00, ${dyn.sens}, ${(dyn.sens*2).toFixed(dyn.decimals)}...).</p>
+                    <p class="mt-2 text-sm italic">Scegli la tacca più vicina e riprova.</p>
+                `);
+                return;
+            }
+
+            // 2. CALCOLO DEL VALORE ATTESO (Arrotondato alla tacca più vicina)
+            const targetMultiple = Math.round(state.F_real / dyn.sens);
+            const expectedForce = targetMultiple * dyn.sens;
+            
+            // Verifica se l'utente ha beccato la tacca giusta
+            if (Math.abs(userVal - expectedForce) < 0.001) {
+                // Corretto!
+                els.inputReading.classList.remove('border-red-500');
+                els.inputReading.classList.add('border-green-500');
+                showFeedback(true, `
+                    <p class="font-bold text-green-800 text-lg mb-1">✅ Misura Corretta!</p>
+                    <p>Hai arrotondato perfettamente alla tacca corretta (${expectedForce.toFixed(dyn.decimals)} N).</p>
+                    <p class="text-sm mt-1 text-green-700">La forza reale calcolata (m·g) era di ${state.F_real.toFixed(4)} N, che cade più vicino alla tacca da te indicata.</p>
+                `);
+            } else {
+                // Multiplo corretto formalmente, ma tacca sbagliata
+                els.inputReading.classList.add('border-red-500');
+                
+                // Aiuto dinamico: è troppo alto o troppo basso?
+                const dir = (userVal > expectedForce) ? "troppo alto" : "troppo basso";
+                
+                showFeedback(false, `
+                    <p class="font-bold text-red-800 text-lg mb-1">❌ Lettura Sbagliata</p>
+                    <p>Hai inserito un multiplo corretto della sensibilità, ma la lettura visiva è errata.</p>
+                    <p class="mt-1">Il valore inserito è <strong>${dir}</strong>. Osserva attentamente l'indice rosso sulla scala.</p>
+                `);
+            }
+        }
+
+        function showFeedback(isSuccess, htmlContent) {
+            els.feedbackPanel.classList.remove('hidden', 'bg-green-50', 'border-green-300', 'text-green-900', 'bg-red-50', 'border-red-300', 'text-red-900');
+            
+            if (isSuccess) {
+                els.feedbackPanel.classList.add('bg-green-50', 'border-green-300', 'text-green-900');
+            } else {
+                els.feedbackPanel.classList.add('bg-red-50', 'border-red-300', 'text-red-900');
+            }
+            
+            els.feedbackPanel.innerHTML = htmlContent;
+        }
+
+        function hideFeedback() {
+            els.feedbackPanel.classList.add('hidden');
+        }
+
+        function resizeAndRender() {
+            state.cw = els.wrapper.clientWidth;
+            state.ch = els.wrapper.clientHeight;
+            els.canvas.width = state.cw;
+            els.canvas.height = state.ch;
+            drawCanvas();
+        }
+        window.addEventListener('resize', resizeAndRender);
+
+        function animLoop() {
+            // Elasticità / Smorzamento per muovere l'indice
+            const delta = state.F_real - state.F_rendered;
+            if (Math.abs(delta) > 0.0005) {
+                state.F_rendered += delta * 0.15;
+                drawCanvas();
+            } else {
+                state.F_rendered = state.F_real;
+            }
+            requestAnimationFrame(animLoop);
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, state.cw, state.ch);
+            const dyn = dynos[state.dynIndex];
+            
+            // Geometria
+            const tubeW = 80;
+            const tubeX = state.cw / 2 - tubeW / 2;
+            const tubeYTop = 50;
+            const tubeYBottom = state.ch - 180; 
+            const scaleHeight = tubeYBottom - tubeYTop - 50; 
+            const scaleYTop = tubeYTop + 25;
+            
+            // Disegno Tubo Esterno
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.roundRect(tubeX, tubeYTop, tubeW, tubeYBottom - tubeYTop, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#64748b'; // Slate 500
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Anello di sospensione
+            ctx.beginPath();
+            ctx.arc(state.cw / 2, tubeYTop - 20, 20, 0, Math.PI * 2);
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Disegno della Scala Graduata (A destra del tubo)
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#334155';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 16px Inter';
+
+            const eps = 0.0001;
+
+            for (let f = 0; f <= dyn.maxN + eps; f += dyn.sens) {
+                const y = scaleYTop + (f / dyn.maxN) * scaleHeight;
+                
+                // Tipo di tacca
+                const isMain = Math.abs(f % dyn.mainTick) < eps || Math.abs((f % dyn.mainTick) - dyn.mainTick) < eps;
+                let isMid = false;
+                if (!isMain && dyn.midTick) {
+                    isMid = Math.abs(f % dyn.midTick) < eps || Math.abs((f % dyn.midTick) - dyn.midTick) < eps;
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(tubeX + tubeW, y);
+                
+                if (isMain) {
+                    // Tacca lunga
+                    ctx.lineTo(tubeX + tubeW + 20, y);
+                    ctx.lineWidth = 3;
+                    
+                    let text = Math.abs(f) < eps ? "0" : f.toFixed(dyn.decimals);
+                    ctx.fillText(text, tubeX + tubeW + 28, y);
+                } else if (isMid) {
+                    // Tacca media
+                    ctx.lineTo(tubeX + tubeW + 12, y);
+                    ctx.lineWidth = 2;
+                } else {
+                    // Tacca piccola (la sensibilità vera)
+                    ctx.lineTo(tubeX + tubeW + 6, y);
+                    ctx.lineWidth = 1;
+                }
+                ctx.stroke();
+            }
+
+            // Posizione dell'indice (in base alla forza REALE interpolata)
+            // L'indice non scatta alla tacca, mostra la fisica reale. 
+            // Spetta allo studente arrotondare!
+            const pointerY = scaleYTop + (state.F_rendered / dyn.maxN) * scaleHeight;
+            
+            // Disegno Molla
+            ctx.beginPath();
+            ctx.moveTo(state.cw / 2, tubeYTop + 10);
+            const coils = 20;
+            const coilH = (pointerY - (tubeYTop + 10)) / coils;
+            
+            for (let i = 0; i <= coils; i++) {
+                const y = (tubeYTop + 10) + i * coilH;
+                const x = state.cw / 2 + (i === 0 || i === coils ? 0 : (i % 2 === 0 ? 12 : -12));
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#94a3b8'; // Grigio
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Indice Rosso (Lineare e netto)
+            ctx.beginPath();
+            ctx.moveTo(tubeX + tubeW / 2, pointerY);
+            ctx.lineTo(tubeX + tubeW + 15, pointerY); // Punta sulla scala
+            ctx.strokeStyle = '#ef4444'; // Red 500
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Punta freccia
+            ctx.beginPath();
+            ctx.moveTo(tubeX + tubeW + 15, pointerY);
+            ctx.lineTo(tubeX + tubeW + 5, pointerY - 6);
+            ctx.lineTo(tubeX + tubeW + 5, pointerY + 6);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+
+            // Asta e Gancio Inferiore
+            ctx.beginPath();
+            ctx.moveTo(state.cw / 2, pointerY);
+            ctx.lineTo(state.cw / 2, tubeYBottom + 30);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(state.cw / 2 - 10, tubeYBottom + 30, 10, 0, Math.PI);
+            ctx.stroke();
+
+            // Massa Appesa
+            if (state.massGrams > 0) {
+                const maxMass = (dyn.maxN / g) * 1000;
+                // Dimensione visiva scalata sulla massa
+                const size = 45 + (state.massGrams / maxMass) * 35; 
+                
+                const boxX = state.cw / 2 - size / 2;
+                const boxY = tubeYBottom + 40;
+                
+                // Anellino
+                ctx.beginPath();
+                ctx.arc(state.cw / 2, boxY, 5, 0, Math.PI*2);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Corpo
+                ctx.fillStyle = '#fbbf24'; // Amber 400
+                ctx.fillRect(boxX, boxY + 5, size, size);
+                ctx.strokeStyle = '#b45309';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(boxX, boxY + 5, size, size);
+                
+                // Testo massa
+                ctx.fillStyle = '#451a03';
+                ctx.font = 'bold 16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(state.massGrams.toFixed(0) + ' g', state.cw / 2, boxY + 5 + size / 2);
+            }
+        }
+
+        els.selectDyno.addEventListener('change', onDynoChange);
+        els.sliderMass.addEventListener('input', onMassChange);
+        
+        els.btnVerify.addEventListener('click', verifyMetrology);
+        
+        els.inputReading.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyMetrology();
+        });
+        // Pulisce l'errore visivo appena lo studente digita un nuovo valore
+        els.inputReading.addEventListener('input', function() {
+            this.classList.remove('border-red-500', 'border-green-500');
+        });
+
+        // Avvio Applicazione
+        window.onload = () => {
+            onDynoChange(); // Init primo strumento
+            resizeAndRender();
+            requestAnimationFrame(animLoop);
+        };
+    </script>
+</body>
+</html>

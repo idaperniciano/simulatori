@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Dinamica: F=ma</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 */
+        }
+
+        /* Stile Custom per gli Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 12px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #2563eb; /* Blue 600 */
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Canvas Wrapper */
+        #canvas-wrapper {
+            width: 100%;
+            height: 400px;
+            background-color: #ffffff;
+            position: relative;
+            background-image: linear-gradient(#f8fafc 1px, transparent 1px), linear-gradient(90deg, #f8fafc 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-6 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Header -->
+        <header class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Secondo Principio della Dinamica</h1>
+                <p class="text-slate-500 mt-1 font-mono">F = m · a</p>
+            </div>
+            <div id="status-badge" class="px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-slate-100 text-slate-600 shadow-inner border border-slate-200">
+                IN PAUSA
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-5 border-b pb-2">Controlli Simulazione</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Massa -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Massa (m)</span>
+                                <span id="val-mass" class="text-blue-700 font-mono font-bold text-lg">10.0 kg</span>
+                            </label>
+                            <input type="range" id="slider-mass" min="1" max="50" value="10" step="1">
+                            <div class="flex justify-between text-xs text-slate-400 font-mono mt-1">
+                                <span>1 kg</span><span>50 kg</span>
+                            </div>
+                        </div>
+
+                        <!-- Forza Applicata -->
+                        <div class="bg-green-50 p-4 rounded-xl border border-green-200">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Forza Applicata (F)</span>
+                                <span id="val-force" class="text-green-700 font-mono font-bold text-lg">50 N</span>
+                            </label>
+                            <input type="range" id="slider-force" min="0" max="200" value="50" step="1">
+                            <div class="flex justify-between text-xs text-green-600/50 font-mono mt-1">
+                                <span>0 N</span><span>200 N</span>
+                            </div>
+                        </div>
+
+                        <!-- Attrito -->
+                        <div class="bg-red-50 p-4 rounded-xl border border-red-200">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Coeff. di Attrito (&mu;)</span>
+                                <span id="val-mu" class="text-red-700 font-mono font-bold text-lg">0.20</span>
+                            </label>
+                            <input type="range" id="slider-mu" min="0" max="0.5" value="0.2" step="0.01">
+                            <div class="flex justify-between text-xs text-red-600/50 font-mono mt-1">
+                                <span>0.0 Liscio</span><span>0.5 Ruvido</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pulsanti -->
+                    <div class="mt-8 grid grid-cols-2 gap-3">
+                        <button id="btn-toggle" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                            <svg id="icon-play" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                            <span id="text-toggle">APPLICA FORZA / AVVIA</span>
+                        </button>
+                        <button id="btn-reset" class="col-span-2 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl shadow transform transition active:scale-95 flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path></svg>
+                            RIPRISTINA POSIZIONE
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                
+                <!-- CANVAS -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                    <div id="canvas-wrapper">
+                        <canvas id="simCanvas"></canvas>
+                    </div>
+                    <!-- Legenda Colori -->
+                    <div class="absolute top-4 left-4 bg-white/90 p-3 rounded-lg border border-slate-200 shadow-sm text-xs font-semibold flex flex-col gap-2 pointer-events-none">
+                        <div class="flex items-center gap-2"><span class="w-4 h-1 bg-green-500 block"></span> Forza Applicata (F)</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-1 bg-red-500 block"></span> Forza di Attrito (Fa)</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-1 bg-blue-500 block"></span> Forza Peso (P)</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-1 bg-orange-500 block"></span> Reazione Vincolare (N)</div>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD RISULTATI IN TEMPO REALE -->
+                <div class="bg-slate-800 text-white p-5 rounded-2xl shadow-md border border-slate-700">
+                    <h3 class="text-sm uppercase tracking-wider text-slate-400 font-semibold mb-4">Analisi Dinamica</h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                        <!-- Peso -->
+                        <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+                            <div class="text-slate-400 text-xs font-bold mb-1">PESO (P)</div>
+                            <div class="font-mono text-xl text-blue-300 font-bold"><span id="out-p">0.0</span> N</div>
+                        </div>
+                        <!-- Attrito -->
+                        <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+                            <div class="text-slate-400 text-xs font-bold mb-1">ATTRITO (Fa)</div>
+                            <div class="font-mono text-xl text-red-300 font-bold"><span id="out-fa">0.0</span> N</div>
+                        </div>
+                        <!-- Forza Risultante -->
+                        <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600 bg-slate-700/80 ring-1 ring-white/10">
+                            <div class="text-slate-300 text-xs font-bold mb-1">RISULTANTE (F<sub>tot</sub>)</div>
+                            <div class="font-mono text-2xl text-white font-bold"><span id="out-ftot">0.0</span> N</div>
+                        </div>
+                        <!-- Accelerazione -->
+                        <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+                            <div class="text-slate-400 text-xs font-bold mb-1">ACCELERAZIONE</div>
+                            <div class="font-mono text-xl text-purple-300 font-bold"><span id="out-a">0.0</span> m/s²</div>
+                        </div>
+                        <!-- Velocità -->
+                        <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+                            <div class="text-slate-400 text-xs font-bold mb-1">VELOCITÀ</div>
+                            <div class="font-mono text-xl text-emerald-300 font-bold"><span id="out-v">0.0</span> m/s</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const els = {
+            mass: document.getElementById('slider-mass'),
+            force: document.getElementById('slider-force'),
+            mu: document.getElementById('slider-mu'),
+            
+            valMass: document.getElementById('val-mass'),
+            valForce: document.getElementById('val-force'),
+            valMu: document.getElementById('val-mu'),
+            
+            outP: document.getElementById('out-p'),
+            outFa: document.getElementById('out-fa'),
+            outFtot: document.getElementById('out-ftot'),
+            outA: document.getElementById('out-a'),
+            outV: document.getElementById('out-v'),
+            
+            btnToggle: document.getElementById('btn-toggle'),
+            btnReset: document.getElementById('btn-reset'),
+            textToggle: document.getElementById('text-toggle'),
+            iconPlay: document.getElementById('icon-play'),
+            statusBadge: document.getElementById('status-badge'),
+            
+            canvas: document.getElementById('simCanvas'),
+            wrapper: document.getElementById('canvas-wrapper')
+        };
+
+        const ctx = els.canvas.getContext('2d');
+        const g = 9.81;
+
+        // Stato della simulazione
+        let state = {
+            m: 10,
+            f_app: 50,
+            mu: 0.2,
+            
+            x: 50,      // Posizione blocco in pixel
+            v: 0,       // Velocità m/s
+            a: 0,       // Accelerazione m/s^2
+            t: 0,
+            
+            isRunning: false,
+            lastTime: 0,
+            
+            // Variabili fisiche correnti calcolate
+            P: 0,
+            N: 0,
+            Fa_max: 0,
+            Fa_actual: 0,
+            Fnet: 0
+        };
+
+        // Dimensioni e scala
+        let cw, ch;
+        const GROUND_Y = 320;
+        const PIXELS_PER_METER = 40; // Per tradurre la velocità fisica in pixel sullo schermo
+        const VECTOR_SCALE = 0.5;    // Quanti pixel per ogni Newton (per disegnare le frecce)
+
+        function resize() {
+            cw = els.wrapper.clientWidth;
+            ch = els.wrapper.clientHeight;
+            els.canvas.width = cw;
+            els.canvas.height = ch;
+            updatePhysicsLogic(0);
+            drawScene();
+        }
+        window.addEventListener('resize', resize);
+
+        function drawArrow(x, y, length, angle, color, label) {
+            if (Math.abs(length) < 2) return; // Non disegnare se vicina a zero
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            
+            // Linea principale
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(length, 0);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Punta
+            const headlen = 12;
+            ctx.beginPath();
+            ctx.moveTo(length, 0);
+            ctx.lineTo(length - headlen, -6);
+            ctx.lineTo(length - headlen, 6);
+            ctx.fillStyle = color;
+            ctx.fill();
+            
+            // Etichetta (mantenuta orizzontale)
+            if (label) {
+                ctx.translate(length + Math.sign(length)*5, 0);
+                ctx.rotate(-angle); // Contro-ruota il testo
+                ctx.fillStyle = color;
+                ctx.font = 'bold 16px Inter';
+                ctx.textAlign = (angle === 0) ? 'left' : (angle === Math.PI ? 'right' : 'center');
+                ctx.textBaseline = 'middle';
+                
+                // Offset manuali per P e N
+                let offsetY = 0;
+                if (angle === Math.PI/2) offsetY = 15; // Giù
+                if (angle === -Math.PI/2) offsetY = -15; // Su
+                
+                ctx.fillText(label, 0, offsetY);
+            }
+            
+            ctx.restore();
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, cw, ch);
+
+            // Disegna Terreno
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y);
+            ctx.lineTo(cw, GROUND_Y);
+            ctx.strokeStyle = '#94a3b8'; // Slate 400
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            
+            // Pattern asfalto/terreno
+            ctx.beginPath();
+            for (let i = 0; i < cw; i += 30) {
+                // Scorri le linee col movimento del blocco per effetto parallasse
+                const offset = (i - (state.x % 30));
+                ctx.moveTo(offset, GROUND_Y);
+                ctx.lineTo(offset - 10, GROUND_Y + 15);
+            }
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Proprietà Blocco (la dimensione scala leggermente con la massa)
+            // m=1 -> lato 40px, m=50 -> lato ~100px
+            const size = 40 + Math.sqrt(state.m) * 8; 
+            const bx = state.x;
+            const by = GROUND_Y - size;
+            const cx = bx + size / 2; // Centro X
+            const cy = by + size / 2; // Centro Y
+
+            // Disegna Blocco
+            ctx.fillStyle = '#64748b'; // Slate 500
+            ctx.fillRect(bx, by, size, size);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(bx, by, size, size);
+            
+            // Testo Massa sul blocco
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(state.m + ' kg', cx, cy);
+
+            // Disegna Vettori dal centro
+            // P (Peso) - Giù (Blu)
+            drawArrow(cx, cy, state.P * VECTOR_SCALE, Math.PI / 2, '#3b82f6', 'P');
+            
+            // N (Normale) - Su (Arancione)
+            drawArrow(cx, cy, state.N * VECTOR_SCALE, -Math.PI / 2, '#f97316', 'N');
+            
+            // F_app (Applicata) - Destra (Verde)
+            if (state.f_app > 0) {
+                // Sfalsiamo leggermente su in y per non coprire attrito
+                drawArrow(cx, cy - 10, state.f_app * VECTOR_SCALE, 0, '#22c55e', 'F'); 
+            }
+            
+            // Fa (Attrito) - Sinistra (Rosso)
+            if (state.Fa_actual > 0) {
+                // Se la velocità è zero e F_app è 0, non c'è attrito. Altrimenti si oppone.
+                // Sfalsiamo leggermente giù in y
+                drawArrow(cx, cy + 10, state.Fa_actual * VECTOR_SCALE, Math.PI, '#ef4444', 'Fa');
+            }
+
+            // Vettore Risultante Finale (Sopra il blocco, spesso)
+            if (Math.abs(state.Fnet) > 0.1) {
+                const dir = state.Fnet > 0 ? 0 : Math.PI;
+                ctx.setLineDash([5, 5]);
+                drawArrow(cx, by - 20, Math.abs(state.Fnet) * VECTOR_SCALE, dir, '#64748b', 'Ftot');
+                ctx.setLineDash([]);
+            }
+        }
+
+        function updatePhysicsLogic(dt) {
+            // Leggi input utente correnti
+            state.m = parseFloat(els.mass.value);
+            state.f_app = parseFloat(els.force.value);
+            state.mu = parseFloat(els.mu.value);
+
+            // Calcoli Forze Verticali
+            state.P = state.m * g;
+            state.N = state.P;
+            
+            // Attrito (Dinamico/Massimo)
+            state.Fa_max = state.mu * state.N;
+
+            // Logica Forza Risultante e Attrito Attivo
+            if (state.v > 0) {
+                // In movimento: Attrito è al massimo (cinetico) e si oppone al moto
+                state.Fa_actual = state.Fa_max;
+                state.Fnet = state.f_app - state.Fa_actual;
+            } else {
+                // Fermo: Attrito statico bilancia la forza fino al suo limite
+                if (state.f_app > state.Fa_max) {
+                    state.Fa_actual = state.Fa_max;
+                    state.Fnet = state.f_app - state.Fa_actual;
+                } else {
+                    state.Fa_actual = state.f_app; // Bilancia perfettamente
+                    state.Fnet = 0;
+                }
+            }
+
+            // Secondo Principio: a = F/m
+            state.a = state.Fnet / state.m;
+
+            if (state.isRunning) {
+                // Aggiorna cinematica
+                state.v += state.a * dt;
+                
+                // Se decelera a causa dell'attrito e la velocità scende sotto zero, si ferma
+                if (state.v < 0) {
+                    state.v = 0;
+                    state.a = 0;
+                    state.Fnet = 0;
+                    // Se la forza applicata < attrito, ora si ferma, attrito bilancia
+                    state.Fa_actual = state.f_app; 
+                }
+
+                // Posizione su schermo
+                state.x += state.v * dt * PIXELS_PER_METER;
+
+                // Gestione fuori schermo (Wrap around / Reset visuale continuo)
+                if (state.x > cw) {
+                    state.x = -100;
+                }
+            }
+
+            // Aggiorna UI Testuale
+            els.valMass.textContent = state.m.toFixed(1) + ' kg';
+            els.valForce.textContent = state.f_app.toFixed(0) + ' N';
+            els.valMu.textContent = state.mu.toFixed(2);
+
+            els.outP.textContent = state.P.toFixed(1);
+            els.outFa.textContent = state.Fa_actual.toFixed(1);
+            els.outFtot.textContent = state.Fnet.toFixed(1);
+            els.outA.textContent = state.a.toFixed(2);
+            els.outV.textContent = state.v.toFixed(2);
+
+            // Aggiorna Badge
+            if (!state.isRunning) {
+                els.statusBadge.textContent = "IN PAUSA";
+                els.statusBadge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200";
+            } else if (state.v === 0 && state.a === 0) {
+                els.statusBadge.textContent = "FERMO (FORZA INSUFFICIENTE)";
+                els.statusBadge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-yellow-100 text-yellow-700 border border-yellow-300";
+            } else if (state.a > 0) {
+                els.statusBadge.textContent = "IN ACCELERAZIONE";
+                els.statusBadge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-green-100 text-green-700 border border-green-300";
+            } else if (state.a < 0) {
+                els.statusBadge.textContent = "IN DECELERAZIONE";
+                els.statusBadge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-red-100 text-red-700 border border-red-300";
+            } else {
+                els.statusBadge.textContent = "MOTO UNIFORME";
+                els.statusBadge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-blue-100 text-blue-700 border border-blue-300";
+            }
+        }
+
+        function loop(timestamp) {
+            if (!state.lastTime) state.lastTime = timestamp;
+            const dt = (timestamp - state.lastTime) / 1000; // Secondi trascorsi
+            state.lastTime = timestamp;
+
+            // Se il tab non è attivo, dt potrebbe essere enorme. Limitiamo.
+            const safeDt = Math.min(dt, 0.1); 
+
+            updatePhysicsLogic(safeDt);
+            drawScene();
+
+            requestAnimationFrame(loop);
+        }
+
+        function toggleSimulation() {
+            state.isRunning = !state.isRunning;
+            if (state.isRunning) {
+                els.textToggle.textContent = "PAUSA SIMULAZIONE";
+                els.btnToggle.classList.replace('bg-blue-600', 'bg-amber-500');
+                els.btnToggle.classList.replace('hover:bg-blue-700', 'hover:bg-amber-600');
+                els.iconPlay.innerHTML = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>';
+            } else {
+                els.textToggle.textContent = "APPLICA FORZA / AVVIA";
+                els.btnToggle.classList.replace('bg-amber-500', 'bg-blue-600');
+                els.btnToggle.classList.replace('hover:bg-amber-600', 'hover:bg-blue-700');
+                els.iconPlay.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>';
+            }
+        }
+
+        function resetSimulation() {
+            state.x = 50;
+            state.v = 0;
+            state.a = 0;
+            state.isRunning = false;
+            
+            // Ripristina bottone
+            els.textToggle.textContent = "APPLICA FORZA / AVVIA";
+            els.btnToggle.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+            els.btnToggle.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            els.iconPlay.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>';
+            
+            updatePhysicsLogic(0);
+            drawScene();
+        }
+
+        // Listeners
+        els.btnToggle.addEventListener('click', toggleSimulation);
+        els.btnReset.addEventListener('click', resetSimulation);
+        
+        // Permetti di aggiornare visivamente i vettori anche quando è in pausa muovendo gli slider
+        [els.mass, els.force, els.mu].forEach(el => {
+            el.addEventListener('input', () => {
+                updatePhysicsLogic(0);
+                drawScene();
+            });
+        });
+
+        // INIT
+        window.onload = () => {
+            resize();
+            requestAnimationFrame(loop);
+        };
+    </script>
+</body>
+</html>

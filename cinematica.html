@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Cinematica: MRU e MRUA</title>
+    
+    <!-- Tailwind CSS per layout e UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js per i grafici dinamici -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Sfondo leggermente verde chiaro/neutro */
+        }
+
+        /* Stile personalizzato per gli slider per facilitare l'uso su LIM/Touch */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #2563eb; /* Blue 600 */
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Contenitore Canvas Grafica 2D */
+        #canvas-container {
+            width: 100%;
+            height: 200px;
+            background-color: #ffffff;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        /* Contenitori per Chart.js (FONDAMENTALE per il corretto rendering) */
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 text-gray-800 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Intestazione -->
+        <header class="text-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <h1 class="text-3xl font-bold text-gray-900">Laboratorio di Cinematica</h1>
+            <p class="text-gray-500 mt-1">Esplora il Moto Rettilineo Uniforme (MRU) e Uniformemente Accelerato (MRUA)</p>
+        </header>
+
+        <!-- Griglia Principale -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- PANNELLO DI CONTROLLO (Sinistra) -->
+            <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-md border border-gray-200 flex flex-col gap-6">
+                
+                <h2 class="text-xl font-bold text-gray-800 border-b pb-2 flex items-center justify-between">
+                    Parametri
+                    <span id="time-display" class="bg-gray-800 text-white px-3 py-1 rounded-md text-lg font-mono">
+                        t = 0.00 s
+                    </span>
+                </h2>
+                
+                <!-- Slider Posizione -->
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <label class="flex justify-between font-semibold text-gray-700 mb-1">
+                        <span>Posizione Iniziale (s₀)</span>
+                        <span id="val-pos" class="text-blue-700">0 m</span>
+                    </label>
+                    <input type="range" id="slider-pos" min="-50" max="50" value="0" step="1">
+                    <div class="flex justify-between text-xs text-gray-500 font-mono">
+                        <span>-50m</span><span>0</span><span>+50m</span>
+                    </div>
+                </div>
+
+                <!-- Slider Velocità -->
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <label class="flex justify-between font-semibold text-gray-700 mb-1">
+                        <span>Velocità Iniziale (v₀)</span>
+                        <span id="val-vel" class="text-red-700">5 m/s</span>
+                    </label>
+                    <input type="range" id="slider-vel" min="-20" max="20" value="5" step="1">
+                    <div class="flex justify-between text-xs text-gray-500 font-mono">
+                        <span>-20m/s</span><span>0</span><span>+20m/s</span>
+                    </div>
+                </div>
+
+                <!-- Slider Accelerazione -->
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                    <label class="flex justify-between font-semibold text-gray-700 mb-1">
+                        <span>Accelerazione (a)</span>
+                        <span id="val-acc" class="text-purple-700">0 m/s²</span>
+                    </label>
+                    <input type="range" id="slider-acc" min="-10" max="10" value="0" step="0.5">
+                    <div class="flex justify-between text-xs text-gray-500 font-mono">
+                        <span>-10m/s²</span><span>0</span><span>+10m/s²</span>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-4 grid grid-cols-2 gap-3">
+                    <button id="btn-play" class="col-span-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        AVVIA SIMULAZIONE
+                    </button>
+                    <button id="btn-pause" class="col-span-2 hidden bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        PAUSA
+                    </button>
+                    <button id="btn-reset" class="col-span-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path></svg>
+                        RIPRISTINA AZZERA
+                    </button>
+                </div>
+            </div>
+
+            <!-- AREA VISUALIZZAZIONE (Destra) -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                
+                <div class="bg-white p-4 rounded-2xl shadow-md border border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Vista Dinamica</h3>
+                    <div id="canvas-container" class="rounded-xl overflow-hidden border border-gray-300 relative shadow-inner">
+                        <canvas id="simCanvas"></canvas>
+                        <!-- Etichette per l'asse visivo -->
+                        <div class="absolute bottom-1 left-2 text-xs font-mono text-gray-500">-100m</div>
+                        <div class="absolute bottom-1 right-2 text-xs font-mono text-gray-500">+100m</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-2xl shadow-md border border-gray-200">
+                    
+                    <!-- Grafico Spazio-Tempo -->
+                    <div class="flex flex-col">
+                        <h3 class="text-center font-bold text-blue-700 mb-2">Spazio - Tempo (s-t)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chartSpazio"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Grafico Velocità-Tempo -->
+                    <div class="flex flex-col">
+                        <h3 class="text-center font-bold text-red-700 mb-2">Velocità - Tempo (v-t)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chartVelocita"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Variabili di Stato Fisico ---
+        let state = {
+            t: 0,           // Tempo attuale (s)
+            x0: 0,          // Posizione iniziale (m)
+            v0: 5,          // Velocità iniziale (m/s)
+            a: 0,           // Accelerazione (m/s²)
+            x: 0,           // Posizione corrente (m)
+            v: 5,           // Velocità corrente (m/s)
+            isRunning: false
+        };
+
+        // Parametri Simulazione
+        const SIM_STEP = 0.02; // Avanzamento temporale per ogni frame (50 fps virtuali)
+        let animationId = null;
+        let lastChartUpdate = 0; // Per non intasare Chart.js
+
+        // --- 2. Riferimenti DOM ---
+        const sliderPos = document.getElementById('slider-pos');
+        const sliderVel = document.getElementById('slider-vel');
+        const sliderAcc = document.getElementById('slider-acc');
+        
+        const valPos = document.getElementById('val-pos');
+        const valVel = document.getElementById('val-vel');
+        const valAcc = document.getElementById('val-acc');
+        const timeDisplay = document.getElementById('time-display');
+
+        const btnPlay = document.getElementById('btn-play');
+        const btnPause = document.getElementById('btn-pause');
+        const btnReset = document.getElementById('btn-reset');
+
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
+
+        // --- 3. Configurazione Base Chart.js ---
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#6b7280';
+        
+        // Opzioni comuni per asse X lineare (risolve i bug di rendering)
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Disabilitato per aggiornamenti real-time fluidi
+            elements: {
+                point: { radius: 0 }, // Nascondi i punti, mostra solo la linea
+                line: { tension: 0.1, borderWidth: 3 }
+            },
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    type: 'linear', // Fondamentale per i dati temporali x,y
+                    title: { display: true, text: 'Tempo t (s)', font: {weight: 'bold'} },
+                    min: 0,
+                    max: 10, // Si aggiornerà dinamicamente
+                    grid: { color: '#e5e7eb' }
+                }
+            }
+        };
+
+        // Inizializzazione Grafico Spazio-Tempo
+        const ctxSpazio = document.getElementById('chartSpazio').getContext('2d');
+        const chartSpazio = new Chart(ctxSpazio, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Posizione (m)',
+                    data: [], // Array di oggetti {x: tempo, y: posizione}
+                    borderColor: '#2563eb', // Blue-600
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                ...commonChartOptions,
+                scales: {
+                    ...commonChartOptions.scales,
+                    y: {
+                        title: { display: true, text: 'Posizione s (m)', font: {weight: 'bold'} },
+                        suggestedMin: -50,
+                        suggestedMax: 50,
+                        grid: { color: '#e5e7eb' }
+                    }
+                }
+            }
+        });
+
+        // Inizializzazione Grafico Velocità-Tempo
+        const ctxVelocita = document.getElementById('chartVelocita').getContext('2d');
+        const chartVelocita = new Chart(ctxVelocita, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Velocità (m/s)',
+                    data: [], // Array di oggetti {x: tempo, y: velocità}
+                    borderColor: '#dc2626', // Red-600
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                ...commonChartOptions,
+                scales: {
+                    ...commonChartOptions.scales,
+                    y: {
+                        title: { display: true, text: 'Velocità v (m/s)', font: {weight: 'bold'} },
+                        suggestedMin: -25,
+                        suggestedMax: 25,
+                        grid: { color: '#e5e7eb' }
+                    }
+                }
+            }
+        });
+
+        // --- 4. Logica Canvas 2D (Animazione) ---
+        function resizeCanvas() {
+            canvas.width = canvasContainer.clientWidth;
+            canvas.height = canvasContainer.clientHeight;
+            drawCanvas();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Disegna l'asse, l'oggetto e i vettori
+        function drawCanvas() {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // Mappatura coordinate fisiche (-100m a +100m) in pixel
+            const physicsMin = -100;
+            const physicsMax = 100;
+            const range = physicsMax - physicsMin;
+            const scale = w / range;
+            const originX = w / 2; // Lo zero è al centro
+            const originY = h / 2 + 20;
+
+            // Disegna asse orizzontale
+            ctx.beginPath();
+            ctx.moveTo(0, originY);
+            ctx.lineTo(w, originY);
+            ctx.strokeStyle = '#9ca3af';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Disegna tacche ogni 10 metri
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'center';
+            for (let i = physicsMin; i <= physicsMax; i+=10) {
+                const px = originX + i * scale;
+                ctx.beginPath();
+                ctx.moveTo(px, originY - 5);
+                ctx.lineTo(px, originY + 5);
+                ctx.strokeStyle = (i === 0) ? '#111827' : '#9ca3af'; // Evidenzia lo Zero
+                ctx.lineWidth = (i === 0) ? 3 : 1;
+                ctx.stroke();
+                
+                if (i % 20 === 0 && i !== 0) {
+                    ctx.fillText(i, px, originY + 18);
+                }
+                if (i === 0) {
+                    ctx.font = 'bold 12px Inter';
+                    ctx.fillStyle = '#111827';
+                    ctx.fillText('0', px, originY + 20);
+                }
+            }
+
+            // Calcola posizione oggetto
+            const objX = originX + state.x * scale;
+            const objY = originY - 15;
+
+            // Disegna Vettore Velocità (se > 0.1)
+            if (Math.abs(state.v) > 0.1) {
+                const vectorLen = state.v * scale * 0.5; // Scalato visivamente
+                ctx.beginPath();
+                ctx.moveTo(objX, objY - 20);
+                ctx.lineTo(objX + vectorLen, objY - 20);
+                ctx.strokeStyle = '#dc2626'; // Rosso
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Punta freccia
+                ctx.beginPath();
+                ctx.moveTo(objX + vectorLen, objY - 20);
+                ctx.lineTo(objX + vectorLen - Math.sign(state.v)*8, objY - 25);
+                ctx.lineTo(objX + vectorLen - Math.sign(state.v)*8, objY - 15);
+                ctx.fillStyle = '#dc2626';
+                ctx.fill();
+            }
+
+            // Disegna l'Oggetto (Punto Materiale / Vagoncino)
+            ctx.beginPath();
+            ctx.arc(objX, objY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#2563eb';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#1e40af';
+            ctx.stroke();
+            
+            // Riflesso
+            ctx.beginPath();
+            ctx.arc(objX - 4, objY - 4, 3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fill();
+        }
+
+        // --- 5. Logica Fisica e Aggiornamento Grafici ---
+        
+        // Aggiunge i dati correnti ai grafici Chart.js
+        function logDataToCharts() {
+            const dataPointSpazio = { x: state.t, y: state.x };
+            const dataPointVelocita = { x: state.t, y: state.v };
+
+            chartSpazio.data.datasets[0].data.push(dataPointSpazio);
+            chartVelocita.data.datasets[0].data.push(dataPointVelocita);
+
+            // Scorrimento dinamico asse X se il tempo supera i 10 secondi
+            if (state.t > 10) {
+                chartSpazio.options.scales.x.min = state.t - 10;
+                chartSpazio.options.scales.x.max = state.t;
+                chartVelocita.options.scales.x.min = state.t - 10;
+                chartVelocita.options.scales.x.max = state.t;
+            }
+
+            chartSpazio.update();
+            chartVelocita.update();
+        }
+
+        // Il "cuore" del simulatore, eseguito ad ogni frame
+        function gameLoop() {
+            if (!state.isRunning) return;
+
+            // 1. Aggiorna Tempo
+            state.t += SIM_STEP;
+            
+            // 2. Calcola Fisica (Leggi Orarie)
+            // v = v0 + a*t
+            state.v = state.v0 + state.a * state.t;
+            // s = s0 + v0*t + 1/2*a*t^2
+            state.x = state.x0 + state.v0 * state.t + 0.5 * state.a * Math.pow(state.t, 2);
+
+            // 3. Aggiorna UI Testo
+            timeDisplay.textContent = `t = ${state.t.toFixed(2)} s`;
+
+            // 4. Disegna su Canvas
+            drawCanvas();
+
+            // 5. Aggiorna Grafici (non a ogni frame per efficienza, ma ogni 0.1s virtuali)
+            if (state.t - lastChartUpdate >= 0.1) {
+                logDataToCharts();
+                lastChartUpdate = state.t;
+            }
+
+            // 6. Ferma se esce dalla visuale (< -120m o > 120m)
+            if (state.x < -120 || state.x > 120) {
+                togglePlayPause();
+                timeDisplay.textContent += " (Fuori Limite)";
+                return;
+            }
+
+            // 7. Richiama il prossimo frame
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- 6. Gestione Input Utente ---
+        function readInputs() {
+            state.x0 = parseFloat(sliderPos.value);
+            state.v0 = parseFloat(sliderVel.value);
+            state.a = parseFloat(sliderAcc.value);
+
+            valPos.textContent = state.x0 + " m";
+            valVel.textContent = state.v0 + " m/s";
+            valAcc.textContent = state.a + " m/s²";
+
+            // Se fermo, aggiorna immediatamente posizione iniziale su schermo
+            if (!state.isRunning && state.t === 0) {
+                state.x = state.x0;
+                state.v = state.v0;
+                drawCanvas();
+            }
+        }
+
+        // Listeners Slider
+        sliderPos.addEventListener('input', readInputs);
+        sliderVel.addEventListener('input', readInputs);
+        sliderAcc.addEventListener('input', readInputs);
+
+        // Controllo Riproduzione
+        function togglePlayPause() {
+            state.isRunning = !state.isRunning;
+            
+            if (state.isRunning) {
+                // PLAY
+                btnPlay.classList.add('hidden');
+                btnPause.classList.remove('hidden');
+                // Disabilita modifiche durante la corsa
+                sliderPos.disabled = true;
+                sliderVel.disabled = true;
+                sliderAcc.disabled = true;
+                // Registra il punto iniziale se partiamo da zero
+                if (state.t === 0) {
+                    logDataToCharts(); 
+                }
+                // Avvia loop
+                animationId = requestAnimationFrame(gameLoop);
+            } else {
+                // PAUSA
+                btnPlay.classList.remove('hidden');
+                btnPause.classList.add('hidden');
+                if (animationId) cancelAnimationFrame(animationId);
+            }
+        }
+
+        function resetSimulation() {
+            // Ferma animazione
+            state.isRunning = false;
+            btnPlay.classList.remove('hidden');
+            btnPause.classList.add('hidden');
+            if (animationId) cancelAnimationFrame(animationId);
+
+            // Riabilita slider
+            sliderPos.disabled = false;
+            sliderVel.disabled = false;
+            sliderAcc.disabled = false;
+
+            // Reset stato fisico temporale
+            state.t = 0;
+            lastChartUpdate = 0;
+            timeDisplay.textContent = "t = 0.00 s";
+            
+            readInputs(); // Prende i valori attuali degli slider e resetta x e v
+
+            // Svuota i Grafici
+            chartSpazio.data.datasets[0].data = [];
+            chartSpazio.options.scales.x.min = 0;
+            chartSpazio.options.scales.x.max = 10;
+            chartSpazio.update();
+
+            chartVelocita.data.datasets[0].data = [];
+            chartVelocita.options.scales.x.min = 0;
+            chartVelocita.options.scales.x.max = 10;
+            chartVelocita.update();
+
+            drawCanvas();
+        }
+
+        btnPlay.addEventListener('click', togglePlayPause);
+        btnPause.addEventListener('click', togglePlayPause);
+        btnReset.addEventListener('click', resetSimulation);
+
+        // --- 7. Inizializzazione Avvio ---
+        window.onload = () => {
+            resizeCanvas();
+            readInputs();
+            resetSimulation();
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore di Vettori: Operazioni e Componenti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Stili personalizzati per gli slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        /* Colori specifici per i vettori */
+        .range-a::-webkit-slider-thumb { background: #ef4444; } /* Red 500 */
+        .range-a::-webkit-slider-runnable-track { background: #fca5a5; }
+        
+        .range-b::-webkit-slider-thumb { background: #3b82f6; } /* Blue 500 */
+        .range-b::-webkit-slider-runnable-track { background: #93c5fd; }
+
+        /* Contenitore Canvas per renderlo responsivo */
+        #canvas-wrapper {
+            width: 100%;
+            height: 500px;
+            background-color: #ffffff;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Checkbox personalizzate */
+        .form-checkbox {
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .form-checkbox:checked {
+            border-color: transparent;
+        }
+        .form-checkbox::after {
+            content: '\2714';
+            font-size: 0.875rem;
+            color: white;
+            display: none;
+        }
+        .form-checkbox:checked::after {
+            display: block;
+        }
+        
+        .check-a:checked { background-color: #ef4444; }
+        .check-b:checked { background-color: #3b82f6; }
+        .check-sum:checked { background-color: #166534; }
+        .check-diff:checked { background-color: #f97316; }
+        .check-comp:checked { background-color: #b91c1c; }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-6 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Header -->
+        <header class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Laboratorio Vettori 2D</h1>
+            <p class="text-slate-500 mt-1">Somma, sottrazione, scomposizione e moltiplicazione scalare</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- PANNELLO DI CONTROLLO (Sinistra) -->
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                
+                <!-- Controlli Vettore A -->
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 shadow-sm">
+                    <h2 class="text-lg font-bold text-red-700 mb-4 flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-red-500 inline-block"></span>
+                        Vettore A
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
+                                Modulo <span id="lbl-magA">10</span>
+                            </label>
+                            <input type="range" id="magA" class="range-a" min="0" max="20" value="10" step="0.5">
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
+                                Angolo (°) <span id="lbl-angA">45°</span>
+                            </label>
+                            <input type="range" id="angA" class="range-a" min="0" max="360" value="45" step="1">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm font-semibold text-gray-700">Moltiplicatore Scalare:</label>
+                            <input type="number" id="scaleA" class="w-20 px-2 py-1 border border-red-300 rounded text-center font-mono focus:outline-none focus:ring-2 focus:ring-red-400" min="-5" max="5" value="1" step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controlli Vettore B -->
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200 shadow-sm">
+                    <h2 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-blue-500 inline-block"></span>
+                        Vettore B
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
+                                Modulo <span id="lbl-magB">8</span>
+                            </label>
+                            <input type="range" id="magB" class="range-b" min="0" max="20" value="8" step="0.5">
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-sm font-semibold text-gray-700 mb-1">
+                                Angolo (°) <span id="lbl-angB">120°</span>
+                            </label>
+                            <input type="range" id="angB" class="range-b" min="0" max="360" value="120" step="1">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm font-semibold text-gray-700">Moltiplicatore Scalare:</label>
+                            <input type="number" id="scaleB" class="w-20 px-2 py-1 border border-blue-300 rounded text-center font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" min="-5" max="5" value="1" step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toggle Visualizzazioni -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h2 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">Visualizzazioni</h2>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="showA" class="form-checkbox check-a" checked>
+                            <span class="text-gray-700 font-medium">Mostra Vettore A</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="showB" class="form-checkbox check-b" checked>
+                            <span class="text-gray-700 font-medium">Mostra Vettore B</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="showSum" class="form-checkbox check-sum">
+                            <span class="text-green-800 font-medium">Mostra Somma (A + B)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="showDiff" class="form-checkbox check-diff">
+                            <span class="text-orange-600 font-medium">Mostra Differenza (A - B)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="showCompA" class="form-checkbox check-comp">
+                            <span class="text-red-800 font-medium text-sm">Mostra Componenti cartesiane di A</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AREA GRAFICA E RISULTATI (Destra) -->
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                
+                <!-- Canvas Container -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-300 overflow-hidden relative">
+                    <div id="canvas-wrapper">
+                        <canvas id="vectorCanvas"></canvas>
+                    </div>
+                    <!-- Legenda Canvas -->
+                    <div class="absolute bottom-2 left-2 bg-white/90 p-2 rounded shadow text-xs font-mono text-gray-500 border border-gray-200 pointer-events-none">
+                        1 quadratino = 5 unità
+                    </div>
+                </div>
+
+                <!-- Risultati in tempo reale -->
+                <div class="bg-slate-800 text-white p-5 rounded-xl shadow-md border border-slate-700">
+                    <h3 class="text-sm uppercase tracking-wider text-slate-400 font-semibold mb-3">Analisi Numerica (Dati Scalati)</h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                            <div class="text-red-400 font-bold mb-1">Vettore A</div>
+                            <div class="font-mono text-sm">Ax = <span id="res-Ax">0.00</span></div>
+                            <div class="font-mono text-sm">Ay = <span id="res-Ay">0.00</span></div>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                            <div class="text-blue-400 font-bold mb-1">Vettore B</div>
+                            <div class="font-mono text-sm">Bx = <span id="res-Bx">0.00</span></div>
+                            <div class="font-mono text-sm">By = <span id="res-By">0.00</span></div>
+                        </div>
+                        <div class="bg-green-900/40 p-3 rounded-lg border border-green-800">
+                            <div class="text-green-400 font-bold mb-1">Somma (A+B)</div>
+                            <div class="font-mono text-sm">Sx = <span id="res-Sx">0.00</span></div>
+                            <div class="font-mono text-sm">Sy = <span id="res-Sy">0.00</span></div>
+                            <div class="font-mono text-xs text-green-300 mt-1">|S| = <span id="res-Smod">0.00</span></div>
+                        </div>
+                        <div class="bg-orange-900/40 p-3 rounded-lg border border-orange-800">
+                            <div class="text-orange-400 font-bold mb-1">Diff. (A-B)</div>
+                            <div class="font-mono text-sm">Dx = <span id="res-Dx">0.00</span></div>
+                            <div class="font-mono text-sm">Dy = <span id="res-Dy">0.00</span></div>
+                            <div class="font-mono text-xs text-orange-300 mt-1">|D| = <span id="res-Dmod">0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const els = {
+            magA: document.getElementById('magA'),
+            angA: document.getElementById('angA'),
+            scaleA: document.getElementById('scaleA'),
+            magB: document.getElementById('magB'),
+            angB: document.getElementById('angB'),
+            scaleB: document.getElementById('scaleB'),
+            
+            lblMagA: document.getElementById('lbl-magA'),
+            lblAngA: document.getElementById('lbl-angA'),
+            lblMagB: document.getElementById('lbl-magB'),
+            lblAngB: document.getElementById('lbl-angB'),
+
+            showA: document.getElementById('showA'),
+            showB: document.getElementById('showB'),
+            showSum: document.getElementById('showSum'),
+            showDiff: document.getElementById('showDiff'),
+            showCompA: document.getElementById('showCompA'),
+
+            resAx: document.getElementById('res-Ax'),
+            resAy: document.getElementById('res-Ay'),
+            resBx: document.getElementById('res-Bx'),
+            resBy: document.getElementById('res-By'),
+            resSx: document.getElementById('res-Sx'),
+            resSy: document.getElementById('res-Sy'),
+            resSmod: document.getElementById('res-Smod'),
+            resDx: document.getElementById('res-Dx'),
+            resDy: document.getElementById('res-Dy'),
+            resDmod: document.getElementById('res-Dmod'),
+
+            canvas: document.getElementById('vectorCanvas'),
+            wrapper: document.getElementById('canvas-wrapper')
+        };
+
+        const ctx = els.canvas.getContext('2d');
+        
+        // Parametri di rendering
+        let pxPerUnit = 10; // Quanti pixel per una singola unità vettoriale. Ricalcolato al resize.
+        let centerX, centerY;
+
+        // --- Gestione Resize Canvas ---
+        function resize() {
+            // Usa le dimensioni effettive del container css
+            els.canvas.width = els.wrapper.clientWidth;
+            els.canvas.height = els.wrapper.clientHeight;
+            centerX = els.canvas.width / 2;
+            centerY = els.canvas.height / 2;
+            
+            // Impostiamo la scala in modo che 40 unità stiano sempre nel lato più corto (zoom adattivo)
+            const minDimension = Math.min(els.canvas.width, els.canvas.height);
+            pxPerUnit = minDimension / 60; // Grid range approssimativo -30 a +30
+            
+            updateAndDraw();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- Matematica dei Vettori ---
+        // Funzione per convertire le coordinate cartesiane fisiche in coordinate Canvas in Pixel
+        function toCanvas(x, y) {
+            return {
+                cx: centerX + x * pxPerUnit,
+                cy: centerY - y * pxPerUnit // La Y è invertita in informatica rispetto alla matematica
+            };
+        }
+
+        // --- Disegno su Canvas ---
+        function drawArrow(x1, y1, x2, y2, color, lineWidth, dashed = false) {
+            const start = toCanvas(x1, y1);
+            const end = toCanvas(x2, y2);
+            
+            // Non disegnare se lunghezza è 0
+            if (Math.abs(start.cx - end.cx) < 0.1 && Math.abs(start.cy - end.cy) < 0.1) return;
+
+            ctx.beginPath();
+            ctx.moveTo(start.cx, start.cy);
+            ctx.lineTo(end.cx, end.cy);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            if (dashed) {
+                ctx.setLineDash([5, 5]);
+            } else {
+                ctx.setLineDash([]);
+            }
+            ctx.stroke();
+
+            // Disegno Punta della Freccia
+            const angle = Math.atan2(end.cy - start.cy, end.cx - start.cx);
+            const headlen = 12; // lunghezza punta
+            
+            ctx.beginPath();
+            ctx.moveTo(end.cx, end.cy);
+            ctx.lineTo(end.cx - headlen * Math.cos(angle - Math.PI / 7), end.cy - headlen * Math.sin(angle - Math.PI / 7));
+            ctx.lineTo(end.cx - headlen * Math.cos(angle + Math.PI / 7), end.cy - headlen * Math.sin(angle + Math.PI / 7));
+            ctx.lineTo(end.cx, end.cy);
+            ctx.fillStyle = color;
+            ctx.fill();
+            
+            ctx.setLineDash([]); // Resetta per le chiamate future
+        }
+
+        function drawLine(x1, y1, x2, y2, color, lineWidth, dashed = false) {
+            const start = toCanvas(x1, y1);
+            const end = toCanvas(x2, y2);
+            ctx.beginPath();
+            ctx.moveTo(start.cx, start.cy);
+            ctx.lineTo(end.cx, end.cy);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            if (dashed) ctx.setLineDash([6, 4]);
+            else ctx.setLineDash([]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function updateAndDraw() {
+            // 1. Lettura Input e Calcolo Stato
+            const magA = parseFloat(els.magA.value);
+            const angA = parseFloat(els.angA.value);
+            const scaleA = parseFloat(els.scaleA.value) || 0; // fallback se vuoto
+
+            const magB = parseFloat(els.magB.value);
+            const angB = parseFloat(els.angB.value);
+            const scaleB = parseFloat(els.scaleB.value) || 0;
+
+            // Aggiorna Label Sliders
+            els.lblMagA.textContent = magA.toFixed(1);
+            els.lblAngA.textContent = angA + '°';
+            els.lblMagB.textContent = magB.toFixed(1);
+            els.lblAngB.textContent = angB + '°';
+
+            // Conversioni e Componenti Base
+            const radA = angA * Math.PI / 180;
+            const radB = angB * Math.PI / 180;
+
+            // Vettori Scalati Finali (quelli che vengono effettivamente disegnati)
+            const Ax = scaleA * magA * Math.cos(radA);
+            const Ay = scaleA * magA * Math.sin(radA);
+            
+            const Bx = scaleB * magB * Math.cos(radB);
+            const By = scaleB * magB * Math.sin(radB);
+
+            // Operazioni
+            const Sx = Ax + Bx;
+            const Sy = Ay + By;
+            const Smod = Math.sqrt(Sx*Sx + Sy*Sy);
+
+            const Dx = Ax - Bx;
+            const Dy = Ay - By;
+            const Dmod = Math.sqrt(Dx*Dx + Dy*Dy);
+
+            // 2. Aggiorna UI Risultati Numerici
+            els.resAx.textContent = Ax.toFixed(2);
+            els.resAy.textContent = Ay.toFixed(2);
+            els.resBx.textContent = Bx.toFixed(2);
+            els.resBy.textContent = By.toFixed(2);
+            
+            els.resSx.textContent = Sx.toFixed(2);
+            els.resSy.textContent = Sy.toFixed(2);
+            els.resSmod.textContent = Smod.toFixed(2);
+            
+            els.resDx.textContent = Dx.toFixed(2);
+            els.resDy.textContent = Dy.toFixed(2);
+            els.resDmod.textContent = Dmod.toFixed(2);
+
+            // 3. Pulisci Canvas e Disegna Ambiente
+            ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+
+            // Disegna Griglia
+            ctx.beginPath();
+            ctx.strokeStyle = '#e2e8f0'; // slate-200
+            ctx.lineWidth = 1;
+            // Griglia: Calcoliamo i limiti fisici visibili
+            const maxPhysX = centerX / pxPerUnit;
+            const maxPhysY = centerY / pxPerUnit;
+            
+            // Linee verticali
+            for (let i = -Math.floor(maxPhysX); i <= Math.floor(maxPhysX); i++) {
+                if (i % 5 === 0) ctx.strokeStyle = '#cbd5e1'; // linea più spessa ogni 5
+                else ctx.strokeStyle = '#f1f5f9';
+                
+                const px = toCanvas(i, 0).cx;
+                ctx.beginPath();
+                ctx.moveTo(px, 0);
+                ctx.lineTo(px, els.canvas.height);
+                ctx.stroke();
+            }
+            // Linee orizzontali
+            for (let i = -Math.floor(maxPhysY); i <= Math.floor(maxPhysY); i++) {
+                if (i % 5 === 0) ctx.strokeStyle = '#cbd5e1';
+                else ctx.strokeStyle = '#f1f5f9';
+                
+                const py = toCanvas(0, i).cy;
+                ctx.beginPath();
+                ctx.moveTo(0, py);
+                ctx.lineTo(els.canvas.width, py);
+                ctx.stroke();
+            }
+
+            // Disegna Assi Principali X e Y
+            ctx.beginPath();
+            ctx.strokeStyle = '#64748b'; // slate-500
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, centerY); ctx.lineTo(els.canvas.width, centerY); // X
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, els.canvas.height); // Y
+            ctx.stroke();
+
+            // Origin dot
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#334155';
+            ctx.fill();
+
+            // 4. Disegna Vettori e Costruzioni in base ai Toggle
+            
+            // --- Costruzioni Somma (Regola del Parallelogramma) ---
+            if (els.showSum.checked && els.showA.checked && els.showB.checked) {
+                // Linea da punta A a punta Somma
+                drawLine(Ax, Ay, Sx, Sy, '#bbf7d0', 2, true); // verde chiaro tratteggiato
+                // Linea da punta B a punta Somma
+                drawLine(Bx, By, Sx, Sy, '#bbf7d0', 2, true);
+            }
+
+            // --- Costruzioni Differenza (A - B) ---
+            if (els.showDiff.checked && els.showA.checked && els.showB.checked) {
+                // La differenza A - B è il vettore che va dalla punta di B alla punta di A.
+                // Lo disegniamo tratteggiato fisicamente tra le due punte per far capire il concetto visivo
+                drawArrow(Bx, By, Ax, Ay, '#fed7aa', 2, true); // arancio chiaro tratteggiato
+            }
+
+            // --- Componenti di A ---
+            if (els.showCompA.checked && els.showA.checked) {
+                // Proiezione su asse X
+                drawLine(Ax, Ay, Ax, 0, '#fca5a5', 2, true);
+                // Proiezione su asse Y
+                drawLine(Ax, Ay, 0, Ay, '#fca5a5', 2, true);
+                
+                // Vettori componenti sugli assi
+                drawArrow(0, 0, Ax, 0, '#991b1b', 3); // Rosso scuro
+                drawArrow(0, 0, 0, Ay, '#991b1b', 3); 
+            }
+
+            // --- Vettori Base A e B ---
+            if (els.showA.checked) {
+                drawArrow(0, 0, Ax, Ay, '#ef4444', 4); // Red 500
+            }
+            if (els.showB.checked) {
+                drawArrow(0, 0, Bx, By, '#3b82f6', 4); // Blue 500
+            }
+
+            // --- Risultanti Somma e Differenza ---
+            if (els.showSum.checked) {
+                drawArrow(0, 0, Sx, Sy, '#166534', 5); // Verde scuro, più spesso
+            }
+            if (els.showDiff.checked) {
+                // Il vettore differenza reale traslato nell'origine
+                drawArrow(0, 0, Dx, Dy, '#ea580c', 4); // Arancio scuro
+            }
+        }
+
+        // --- Event Listeners ---
+        const inputs = [
+            els.magA, els.angA, els.scaleA,
+            els.magB, els.angB, els.scaleB,
+            els.showA, els.showB, els.showSum, els.showDiff, els.showCompA
+        ];
+
+        inputs.forEach(input => {
+            input.addEventListener('input', updateAndDraw);
+            input.addEventListener('change', updateAndDraw);
+        });
+
+        // Init setup
+        window.onload = () => {
+            resize(); // triggers updateAndDraw internally
+        };
+
+    </script>
+</body>
+</html>

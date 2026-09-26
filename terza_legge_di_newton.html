@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terzo Principio della Dinamica: Azione e Reazione</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 12px 0;
+        }
+        
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+
+        /* Colori specifici per gli slider */
+        #slider-ma::-webkit-slider-thumb { background: #ef4444; } /* Red */
+        #slider-ma::-webkit-slider-runnable-track { background: #fca5a5; }
+        
+        #slider-mb::-webkit-slider-thumb { background: #3b82f6; } /* Blue */
+        #slider-mb::-webkit-slider-runnable-track { background: #93c5fd; }
+        
+        #slider-f::-webkit-slider-thumb { background: #10b981; } /* Emerald */
+        #slider-f::-webkit-slider-runnable-track { background: #6ee7b7; }
+
+        #canvas-wrapper {
+            width: 100%;
+            height: 350px;
+            background-color: #ffffff;
+            position: relative;
+            /* Effetto Ghiaccio/Griglia */
+            background-image: 
+                linear-gradient(rgba(226, 232, 240, 0.5) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+            background-size: 25px 25px;
+            background-position: center center;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Orologio timer */
+        .timer-glow {
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-6 min-h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Header -->
+        <header class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Azione e Reazione</h1>
+                <p class="text-slate-500 mt-1">Due blocchi (es. pattinatori sul ghiaccio) si spingono per 1 secondo.</p>
+            </div>
+            <div id="status-badge" class="px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-slate-100 text-slate-600 shadow-inner border border-slate-200 transition-colors duration-300">
+                IN ATTESA
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-5 border-b pb-2">Parametri Iniziali</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Massa A -->
+                        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Massa A (Rosso)</span>
+                                <span id="val-ma" class="text-red-700 font-mono font-bold text-lg">50 kg</span>
+                            </label>
+                            <input type="range" id="slider-ma" min="10" max="150" value="50" step="5">
+                        </div>
+
+                        <!-- Massa B -->
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Massa B (Blu)</span>
+                                <span id="val-mb" class="text-blue-700 font-mono font-bold text-lg">100 kg</span>
+                            </label>
+                            <input type="range" id="slider-mb" min="10" max="150" value="100" step="5">
+                        </div>
+
+                        <!-- Forza di Spinta -->
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                            <label class="flex justify-between font-semibold text-slate-700 mb-1">
+                                <span>Forza di Spinta Reciproca</span>
+                                <span id="val-f" class="text-emerald-700 font-mono font-bold text-lg">200 N</span>
+                            </label>
+                            <input type="range" id="slider-f" min="10" max="500" value="200" step="10">
+                            <p class="text-xs text-emerald-600/70 mt-2 font-medium text-center">La spinta durerà esattamente 1.0 secondi</p>
+                        </div>
+                    </div>
+
+                    <!-- Pulsanti -->
+                    <div class="mt-8 grid grid-cols-2 gap-3">
+                        <button id="btn-play" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2 text-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                            AVVIA SPINTA
+                        </button>
+                        <button id="btn-reset" class="col-span-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-4 rounded-xl shadow-sm transform transition active:scale-95 flex justify-center items-center gap-2 border border-slate-300">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path></svg>
+                            RIPRISTINA AL CENTRO
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                
+                <!-- CANVAS -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                    
+                    <!-- Orologio Overlay -->
+                    <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-lg font-mono font-bold text-xl shadow-md z-10 border border-slate-700 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span id="display-time" class="timer-glow">0.00 s</span>
+                    </div>
+
+                    <div id="canvas-wrapper">
+                        <canvas id="simCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD RISULTATI IN TEMPO REALE -->
+                <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-700">
+                    <h3 class="text-sm uppercase tracking-wider text-slate-400 font-semibold mb-4 text-center">Dashboard Telemetria in Tempo Reale</h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        
+                        <!-- Colonna Blocco A -->
+                        <div class="space-y-3 p-4 rounded-xl bg-red-900/20 border border-red-500/30">
+                            <h4 class="text-red-400 font-bold text-center border-b border-red-500/30 pb-2">BLOCCO A (Rosso)</h4>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Forza Subìta:</span>
+                                <span class="font-mono text-red-200 font-bold"><span id="out-fa">0</span> N</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Accelerazione:</span>
+                                <span class="font-mono text-red-200 font-bold"><span id="out-aa">0.00</span> m/s²</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Velocità:</span>
+                                <span class="font-mono text-red-200 font-bold"><span id="out-va">0.00</span> m/s</span>
+                            </div>
+                        </div>
+
+                        <!-- Colonna Equazione centrale (Visibile solo su schermi larghi) -->
+                        <div class="hidden md:flex flex-col justify-center items-center text-slate-400 p-4">
+                            <div class="text-2xl font-bold font-mono">
+                                <span class="text-red-400">F<sub>A</sub></span> = <span class="text-blue-400">-F<sub>B</sub></span>
+                            </div>
+                            <div class="text-xs mt-2 text-center">
+                                Le forze sono sempre uguali e opposte.<br>Le velocità dipendono dalla massa.
+                            </div>
+                        </div>
+
+                        <!-- Colonna Blocco B -->
+                        <div class="space-y-3 p-4 rounded-xl bg-blue-900/20 border border-blue-500/30">
+                            <h4 class="text-blue-400 font-bold text-center border-b border-blue-500/30 pb-2">BLOCCO B (Blu)</h4>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Forza Subìta:</span>
+                                <span class="font-mono text-blue-200 font-bold"><span id="out-fb">0</span> N</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Accelerazione:</span>
+                                <span class="font-mono text-blue-200 font-bold"><span id="out-ab">0.00</span> m/s²</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Velocità:</span>
+                                <span class="font-mono text-blue-200 font-bold"><span id="out-vb">0.00</span> m/s</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const els = {
+            ma: document.getElementById('slider-ma'),
+            mb: document.getElementById('slider-mb'),
+            f: document.getElementById('slider-f'),
+            
+            valMa: document.getElementById('val-ma'),
+            valMb: document.getElementById('val-mb'),
+            valF: document.getElementById('val-f'),
+            
+            outFa: document.getElementById('out-fa'),
+            outAa: document.getElementById('out-aa'),
+            outVa: document.getElementById('out-va'),
+            
+            outFb: document.getElementById('out-fb'),
+            outAb: document.getElementById('out-ab'),
+            outVb: document.getElementById('out-vb'),
+            
+            time: document.getElementById('display-time'),
+            badge: document.getElementById('status-badge'),
+            
+            btnPlay: document.getElementById('btn-play'),
+            btnReset: document.getElementById('btn-reset'),
+            
+            canvas: document.getElementById('simCanvas'),
+            wrapper: document.getElementById('canvas-wrapper')
+        };
+
+        const ctx = els.canvas.getContext('2d');
+
+        // Parametri Simulazione
+        const PUSH_DURATION = 1.0; // secondi
+        const PIXELS_PER_METER = 50; // Scala visiva
+
+        // Stato della simulazione
+        let state = {
+            mA: 50,
+            mB: 100,
+            pushForce: 200,
+            
+            xA: 0, // Posizione in metri (relativa al centro)
+            xB: 0,
+            vA: 0, // Velocità m/s
+            vB: 0,
+            aA: 0, // Accelerazione m/s^2
+            aB: 0,
+            
+            FA: 0,
+            FB: 0,
+            
+            t: 0,
+            isRunning: false,
+            phase: 'IDLE', // IDLE, PUSHING, COASTING
+            lastTimestamp: 0
+        };
+
+        let cw, ch, centerX, centerY;
+
+        function resize() {
+            cw = els.wrapper.clientWidth;
+            ch = els.wrapper.clientHeight;
+            els.canvas.width = cw;
+            els.canvas.height = ch;
+            centerX = cw / 2;
+            centerY = ch / 2;
+            
+            // Se siamo in idle, posiziona i blocchi esattamente al centro
+            if(state.phase === 'IDLE') {
+                resetSimulation();
+            } else {
+                drawScene();
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        // Calcola la dimensione del blocco in base alla massa (Min 40px, Max 90px)
+        function getBlockSize(mass) {
+            return 40 + (mass / 150) * 50;
+        }
+
+        // Funzione helper per disegnare frecce
+        function drawArrow(x, y, length, color, isLeft) {
+            if (Math.abs(length) < 1) return;
+            
+            const direction = isLeft ? -1 : 1;
+            const endX = x + length * direction;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(endX, y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Punta freccia
+            const headlen = 12;
+            ctx.beginPath();
+            ctx.moveTo(endX, y);
+            ctx.lineTo(endX - headlen * direction, y - 6);
+            ctx.lineTo(endX - headlen * direction, y + 6);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, cw, ch);
+
+            // Disegna linea centrale di origine
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, ch);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)'; // Slate 400
+            ctx.setLineDash([10, 10]);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dimensioni
+            const sizeA = getBlockSize(state.mA);
+            const sizeB = getBlockSize(state.mB);
+
+            // Conversioni coordinate fisiche -> pixel
+            // In fisica, x=0 è il punto di contatto.
+            // A parte verso x negative, B verso x positive.
+            // Il bordo destro di A e sinistro di B toccano l'origine all'inizio.
+            
+            const pxA = centerX + (state.xA * PIXELS_PER_METER) - sizeA; // Lato sx di A
+            const pxB = centerX + (state.xB * PIXELS_PER_METER);         // Lato sx di B
+            
+            const pyA = centerY - sizeA/2;
+            const pyB = centerY - sizeB/2;
+
+            // Disegna Blocco A (Rosso)
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.roundRect(pxA, pyA, sizeA, sizeA, 8);
+            ctx.fill();
+            ctx.strokeStyle = '#b91c1c';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(state.mA + 'kg', pxA + sizeA/2, pyA + sizeA/2);
+
+            // Disegna Blocco B (Blu)
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.roundRect(pxB, pyB, sizeB, sizeB, 8);
+            ctx.fill();
+            ctx.strokeStyle = '#1d4ed8';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = 'white';
+            ctx.fillText(state.mB + 'kg', pxB + sizeB/2, pyB + sizeB/2);
+
+            // Disegna Vettori Forza (solo durante la fase di spinta)
+            if (state.phase === 'PUSHING') {
+                // Vettore su A (Punta a sinistra, nasce dal centro di A)
+                const forceScale = 0.3; // px per Newton per le frecce
+                const arrowLen = state.pushForce * forceScale;
+                
+                // Disegna freccia rossa verso sinistra
+                drawArrow(pxA + sizeA/2, pyA - 20, arrowLen, '#ef4444', true);
+                
+                // Disegna freccia blu verso destra
+                drawArrow(pxB + sizeB/2, pyB - 20, arrowLen, '#3b82f6', false);
+            }
+        }
+
+        function updatePhysics(dt) {
+            if (!state.isRunning) return;
+
+            state.t += dt;
+
+            if (state.t <= PUSH_DURATION) {
+                // Fase 1: Spinta attiva
+                state.phase = 'PUSHING';
+                
+                // Forze (Azione e Reazione)
+                state.FA = -state.pushForce; // A va a sinistra
+                state.FB = state.pushForce;  // B va a destra
+                
+                // Accelerazioni (a = F/m)
+                state.aA = state.FA / state.mA;
+                state.aB = state.FB / state.mB;
+                
+                // Aggiorna Velocità
+                state.vA += state.aA * dt;
+                state.vB += state.aB * dt;
+
+            } else {
+                // Fase 2: Moto inerziale (Senza attrito)
+                state.phase = 'COASTING';
+                
+                // Se appena entrati in Coasting, assicuriamo che il tempo sia esatto a 1.0 per la cinematica finale della spinta
+                // e le accelerazioni/forze si azzerino
+                state.FA = 0;
+                state.FB = 0;
+                state.aA = 0;
+                state.aB = 0;
+                
+                // Velocità restano costanti
+            }
+
+            // Aggiorna Posizioni in base alle velocità attuali
+            state.xA += state.vA * dt;
+            state.xB += state.vB * dt;
+
+            updateDashboardUI();
+        }
+
+        function updateDashboardUI() {
+            // Aggiorna Timer
+            els.time.textContent = state.t.toFixed(2) + ' s';
+            
+            // Colore Badge
+            if (state.phase === 'PUSHING') {
+                els.badge.textContent = "SPINTA IN CORSO";
+                els.badge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-emerald-100 text-emerald-700 shadow-sm border border-emerald-300 transition-colors duration-300";
+            } else if (state.phase === 'COASTING') {
+                els.badge.textContent = "MOTO INERZIALE";
+                els.badge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-sky-100 text-sky-700 shadow-sm border border-sky-300 transition-colors duration-300";
+            }
+
+            // Dashboard A
+            els.outFa.textContent = state.FA.toFixed(0);
+            els.outAa.textContent = state.aA.toFixed(2);
+            els.outVa.textContent = state.vA.toFixed(2);
+
+            // Dashboard B
+            els.outFb.textContent = state.FB.toFixed(0);
+            els.outAb.textContent = state.aB.toFixed(2);
+            els.outVb.textContent = state.vB.toFixed(2);
+        }
+
+        function loop(timestamp) {
+            if (!state.lastTimestamp) state.lastTimestamp = timestamp;
+            
+            const dt = (timestamp - state.lastTimestamp) / 1000;
+            state.lastTimestamp = timestamp;
+
+            // Limita dt per evitare salti enormi se si cambia tab
+            const safeDt = Math.min(dt, 0.1);
+
+            updatePhysics(safeDt);
+            drawScene();
+
+            // Ferma animazione se i blocchi escono completamente dallo schermo (circa 6 metri dal centro)
+            if (state.phase === 'COASTING' && (state.xA < -8 || state.xB > 8)) {
+                state.isRunning = false;
+                els.btnPlay.disabled = false;
+                els.btnPlay.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            if (state.isRunning) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        function readInputs() {
+            state.mA = parseFloat(els.ma.value);
+            state.mB = parseFloat(els.mb.value);
+            state.pushForce = parseFloat(els.f.value);
+            
+            els.valMa.textContent = state.mA + ' kg';
+            els.valMb.textContent = state.mB + ' kg';
+            els.valF.textContent = state.pushForce + ' N';
+        }
+
+        [els.ma, els.mb, els.f].forEach(el => {
+            el.addEventListener('input', () => {
+                readInputs();
+                if (state.phase === 'IDLE') drawScene();
+            });
+        });
+
+        function playSimulation() {
+            if (state.phase !== 'IDLE') resetSimulation(); // Se era finito, resetta prima di ripartire
+            
+            readInputs();
+            state.isRunning = true;
+            state.phase = 'PUSHING';
+            state.lastTimestamp = 0;
+            
+            // Disabilita bottone play e slider durante il moto
+            els.btnPlay.disabled = true;
+            els.btnPlay.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            requestAnimationFrame(loop);
+        }
+
+        function resetSimulation() {
+            state.isRunning = false;
+            state.phase = 'IDLE';
+            state.t = 0;
+            
+            state.xA = 0;
+            state.xB = 0;
+            state.vA = 0;
+            state.vB = 0;
+            state.aA = 0;
+            state.aB = 0;
+            state.FA = 0;
+            state.FB = 0;
+            
+            els.btnPlay.disabled = false;
+            els.btnPlay.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            els.badge.textContent = "IN ATTESA";
+            els.badge.className = "px-6 py-2 rounded-xl font-bold text-lg uppercase tracking-widest bg-slate-100 text-slate-600 shadow-inner border border-slate-200 transition-colors duration-300";
+            
+            updateDashboardUI();
+            readInputs();
+            drawScene();
+        }
+
+        els.btnPlay.addEventListener('click', playSimulation);
+        els.btnReset.addEventListener('click', resetSimulation);
+
+        // Inizializzazione
+        window.onload = () => {
+            readInputs();
+            resize(); // Triggera anche la prima drawScene
+        };
+
+    </script>
+</body>
+</html>
