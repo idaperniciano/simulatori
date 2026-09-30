@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheda: Ordine di Grandezza</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .math-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Rimuove frecce da input numerici se presenti */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        .row-container:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <div class="max-w-5xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Intestazione -->
+        <header class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-4">L'Ordine di Grandezza</h1>
+            
+            <!-- Box Promemoria -->
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-left shadow-sm inline-block max-w-3xl w-full">
+                <h2 class="font-bold text-amber-800 text-lg mb-1">Regola della Soglia del 5:</h2>
+                <ul class="list-disc pl-5 text-amber-900 text-sm md:text-base space-y-1">
+                    <li>Se il numero davanti (mantissa) è <strong>minore di 5</strong> (< 5), l'esponente dell'ordine di grandezza <strong>rimane uguale</strong>.</li>
+                    <li>Se il numero davanti (mantissa) è <strong>maggiore o uguale a 5</strong> (&ge; 5), l'esponente <strong>aumenta di +1</strong>.</li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- Contenitore Esercizi -->
+        <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+            <div id="exercises-container" class="flex flex-col">
+                <!-- Le righe verranno popolate qui da JS -->
+            </div>
+        </div>
+
+        <!-- Bottoni Azione -->
+        <div class="flex flex-col md:flex-row justify-center gap-4 mt-2">
+            <button onclick="verifyAnswers()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl shadow transition-colors flex items-center justify-center gap-2 text-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                VERIFICA SCHEDA
+            </button>
+            <button onclick="generateData()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-3 px-8 rounded-xl transition-colors flex items-center justify-center gap-2 text-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                GENERA NUOVA SCHEDA
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const units = ['m', 'kg', 's', 'J', 'W', 'N', 'Hz', 'Pa', 'L', 'V', 'A'];
+        let rowData = [];
+
+        // Funzione per formattare la stringa del numero esteso (gestisce spazi per migliaia e virgola)
+        function formatExtended(mantissaStr, exponent) {
+            let mDigits = mantissaStr.replace('.', ''); // es: "4.9" -> "49"
+            
+            if (exponent > 0) {
+                // Per numeri grandi aggiungiamo zeri a destra
+                let zerosToAdd = exponent - 1;
+                let rawStr = mDigits + '0'.repeat(Math.max(0, zerosToAdd));
+                // Aggiunta dello spazio per le migliaia (da destra a sinistra)
+                let withSpaces = rawStr.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                return withSpaces;
+            } else {
+                // Per numeri piccoli aggiungiamo zeri dopo la virgola
+                let zerosAfterComma = Math.abs(exponent) - 1;
+                // Costruisce es: 0,00049
+                let rawStr = "0," + "0".repeat(zerosAfterComma) + mDigits;
+                // Di solito nei decimali piccoli non si mettono gli spazi per le migliaia a scuola
+                return rawStr;
+            }
+        }
+
+        function createExerciseRowData() {
+            let mantissa;
+            // 35% di probabilità di generare un caso trappola sulla soglia del 5
+            let isEdgeCase = Math.random() < 0.35;
+            
+            if (isEdgeCase) {
+                // Genera mantissa tra 4.5 e 5.4
+                mantissa = (Math.floor(Math.random() * 10) + 45) / 10;
+            } else {
+                // Genera mantissa generica tra 1.1 e 9.9
+                mantissa = (Math.floor(Math.random() * 89) + 11) / 10;
+            }
+            
+            let mantissaStr = mantissa.toFixed(1); // Es: "5.0"
+            mantissa = parseFloat(mantissaStr); // Assicura precisione perfetta
+
+            let exponent;
+            // Esponenti da -8 a +8, escludendo 0 e 1 per evitare banalità e ambiguità
+            do {
+                exponent = Math.floor(Math.random() * 17) - 8; 
+            } while (exponent === 0 || exponent === 1);
+
+            let unit = units[Math.floor(Math.random() * units.length)];
+
+            // Costruisce la visualizzazione estesa
+            let extendedFormatted = formatExtended(mantissaStr, exponent);
+            
+            // Costruisce la visualizzazione scientifica (sostituendo punto con virgola)
+            let sciFormatted = mantissaStr.replace('.', ',') + ' &times; 10<sup class="text-xs">' + exponent + '</sup>';
+
+            // Logica esatta dell'Ordine di Grandezza
+            let correctOdG = (mantissa >= 5.0) ? exponent + 1 : exponent;
+
+            return {
+                extendedFormatted,
+                sciFormatted,
+                unit,
+                correctOdG
+            };
+        }
+
+        function generateData() {
+            const container = document.getElementById('exercises-container');
+            container.innerHTML = '';
+            rowData = [];
+
+            for (let i = 0; i < 10; i++) {
+                let data = createExerciseRowData();
+                rowData.push(data);
+
+                // Creazione della riga strutturata da sinistra a destra
+                const rowHtml = `
+                    <div class="row-container flex flex-col md:flex-row items-center justify-between p-4 md:p-5 border-b border-slate-100 hover:bg-slate-50 transition-colors gap-3 md:gap-0">
+                        
+                        <!-- Sinistra: Numero Esteso -->
+                        <div class="w-full md:w-5/12 text-center md:text-right font-bold text-slate-700 text-lg math-font pr-0 md:pr-4">
+                            ${data.extendedFormatted} <span class="text-slate-500 font-normal">${data.unit}</span>
+                        </div>
+                        
+                        <!-- Separatore "=" (Nascosto su mobile stretto, sostituito dal flusso) -->
+                        <div class="hidden md:flex text-slate-400 font-bold px-2">=</div>
+                        
+                        <!-- Centro: Notazione Scientifica -->
+                        <div class="w-full md:w-3/12 text-center font-bold text-blue-700 text-lg math-font bg-blue-50 py-2 px-3 rounded border border-blue-100">
+                            ${data.sciFormatted} <span class="text-blue-500 font-normal">${data.unit}</span>
+                        </div>
+
+                        <!-- Destra: Input Ordine di Grandezza -->
+                        <div class="w-full md:w-4/12 flex items-center justify-center md:justify-end gap-2 text-slate-700 math-font font-bold pl-0 md:pl-4">
+                            <span class="text-sm uppercase tracking-wide text-slate-500 mr-1">&#10142; OdG:</span>
+                            <span>10<sup class="text-sm">^</sup></span>
+                            <input type="text" id="input-odg-${i}" class="odg-input text-center border-2 border-slate-300 rounded-lg p-2 w-16 text-lg focus:border-blue-500 focus:outline-none transition-colors shadow-inner bg-white" placeholder="?">
+                            <div id="icon-${i}" class="w-6 h-6 flex items-center justify-center text-xl ml-1"></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += rowHtml;
+            }
+
+            // Aggiungi listener per filtrare i caratteri
+            document.querySelectorAll('.odg-input').forEach(input => {
+                input.addEventListener('input', function(e) {
+                    let val = this.value;
+                    // Tieni solo numeri e il segno meno
+                    val = val.replace(/[^\d-]/g, '');
+                    // Il meno può stare solo all'inizio della stringa
+                    if (val.indexOf('-') > 0) {
+                        val = val.replace(/-/g, '');
+                    }
+                    // Rimuovi stili di feedback passati al nuovo inserimento
+                    this.classList.remove('border-green-500', 'bg-green-50', 'text-green-800', 'border-red-500', 'bg-red-50', 'text-red-800');
+                    this.value = val;
+                });
+            });
+        }
+
+        function verifyAnswers() {
+            let allCorrect = true;
+
+            for (let i = 0; i < 10; i++) {
+                let inputEl = document.getElementById(`input-odg-${i}`);
+                let iconEl = document.getElementById(`icon-${i}`);
+                let correctVal = rowData[i].correctOdG;
+                
+                let userValStr = inputEl.value.trim();
+                let userVal = parseInt(userValStr);
+
+                // Reset stili
+                inputEl.classList.remove('border-green-500', 'bg-green-50', 'text-green-800', 'border-red-500', 'bg-red-50', 'text-red-800', 'border-slate-300');
+                
+                if (userValStr === "" || isNaN(userVal)) {
+                    iconEl.innerHTML = '⚠️';
+                    inputEl.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
+                    allCorrect = false;
+                    continue;
+                }
+
+                if (userVal === correctVal) {
+                    iconEl.innerHTML = '✅';
+                    inputEl.classList.add('border-green-500', 'bg-green-50', 'text-green-800');
+                } else {
+                    iconEl.innerHTML = '❌';
+                    inputEl.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
+                    allCorrect = false;
+                }
+            }
+        }
+
+        // Avvio iniziale
+        window.onload = generateData;
+    </script>
+</body>
+</html>

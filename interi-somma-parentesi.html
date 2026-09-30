@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Somma Algebrica a Due Passaggi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f4f8; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; }
+        .exercise-box { font-size: 2.5em; margin: 20px 0; font-family: 'Courier New', Courier, monospace; background: #eaf2f8; padding: 15px 30px; border-radius: 8px; display: inline-block; font-weight: bold; color: #2980b9; }
+        .step { background: #fafafa; border-left: 5px solid #3498db; margin: 20px 0; padding: 20px; border-radius: 4px; text-align: left; transition: opacity 0.3s; }
+        .step.disabled { opacity: 0.4; pointer-events: none; border-left-color: #bdc3c7; }
+        .step-title { font-weight: bold; color: #34495e; margin-bottom: 10px; font-size: 1.1em; }
+        input[type="text"], input[type="number"] { font-size: 1.2em; padding: 8px; width: 180px; text-align: center; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; }
+        input:focus { border-color: #3498db; }
+        button { font-size: 1.1em; padding: 10px 20px; margin-left: 10px; cursor: pointer; background: #3498db; color: white; border: none; border-radius: 6px; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #2980b9; }
+        .btn-new { background: #27ae60; margin-top: 20px; }
+        .btn-new:hover { background: #2ecc71; }
+        .feedback { font-weight: bold; margin-left: 15px; font-size: 1.1em; }
+        .correct { color: #27ae60; }
+        .error { color: #e74c3c; }
+        canvas { margin-top: 30px; border: 1px solid #ecf0f1; background: #fff; width: 100%; height: 180px; border-radius: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
+        .instructions { font-size: 0.9em; color: #7f8c8d; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Somma Algebrica: via le parentesi</h1>
+    
+    <div class="exercise-box" id="exercise-display">(+0) + (+0)</div>
+
+    <div class="step" id="step1-container">
+        <div class="step-title">Passaggio 1: Elimina le parentesi e scrivi i segni corretti</div>
+        <br>
+        <input type="text" id="step1-input" placeholder="es. -4+7" autocomplete="off">
+        <button onclick="checkStep1()">Verifica</button>
+        <span class="feedback" id="feedback1"></span>
+    </div>
+
+    <div class="step disabled" id="step2-container">
+        <div class="step-title">Passaggio 2: Calcola il risultato finale</div>
+        <br>
+        <input type="number" id="step2-input" placeholder="Risultato">
+        <button onclick="checkStep2()">Verifica Calcolo</button>
+        <span class="feedback" id="feedback2"></span>
+    </div>
+
+    <canvas id="numberLine" width="760" height="180"></canvas>
+
+    <button class="btn-new" onclick="generateExercise()">Genera Nuovo Esercizio</button>
+</div>
+
+<script>
+    let a, b, operatorSymbol, term2;
+    const canvas = document.getElementById('numberLine');
+    const ctx = canvas.getContext('2d');
+
+    function init() {
+        generateExercise();
+    }
+
+    function generateExercise() {
+        // Genera due numeri tra -10 e +10
+        a = Math.floor(Math.random() * 21) - 10;
+        b = Math.floor(Math.random() * 21) - 10;
+        
+        // Scegli casualmente addizione o sottrazione
+        let isAddition = Math.random() > 0.5;
+        operatorSymbol = isAddition ? '+' : '-';
+        
+        // Calcola il vero valore da sommare algebricamente
+        term2 = isAddition ? b : -b;
+
+        // Formatta la stringa per mostrarla con i segni espliciti
+        let strA = (a >= 0 ? '+' + a : a);
+        let strB = (b >= 0 ? '+' + b : b);
+
+        document.getElementById('exercise-display').innerText = `(${strA}) ${operatorSymbol} (${strB})`;
+        
+        // Reset interfaccia
+        document.getElementById('step1-input').value = '';
+        document.getElementById('step2-input').value = '';
+        document.getElementById('feedback1').innerHTML = '';
+        document.getElementById('feedback2').innerHTML = '';
+        
+        document.getElementById('step2-container').classList.add('disabled');
+        document.getElementById('step1-input').focus();
+        
+        drawEmptyLine();
+    }
+
+    function checkStep1() {
+        // Rimuove tutti gli spazi dall'input utente
+        let input = document.getElementById('step1-input').value.replace(/\s+/g, '');
+        if(input === '') return;
+
+        // Costruisci le versioni corrette accettate
+        let strA1 = a.toString(); // es. "5" o "-5"
+        let strA2 = (a >= 0 ? '+' + a : a.toString()); // es. "+5" o "-5"
+        let strTerm2 = (term2 >= 0 ? '+' + term2 : term2.toString()); // es. "+3" o "-3"
+        
+        let valid1 = strA1 + strTerm2; // "5+3"
+        let valid2 = strA2 + strTerm2; // "+5+3"
+
+        if (input === valid1 || input === valid2) {
+            document.getElementById('feedback1').innerHTML = '<span class="correct">✓ Perfetto! Ora calcola.</span>';
+            document.getElementById('step2-container').classList.remove('disabled');
+            document.getElementById('step2-input').focus();
+        } else {
+            // Analisi basilare dell'errore
+            let tip = "Ricorda: segni uguali diventano +, segni diversi diventano -.";
+            document.getElementById('feedback1').innerHTML = `<span class="error">✗ Attenzione ai segni. ${tip}</span>`;
+        }
+    }
+
+    function checkStep2() {
+        let inputVal = document.getElementById('step2-input').value;
+        if(inputVal === '') return;
+        
+        let input = parseInt(inputVal);
+        let result = a + term2;
+
+        if (input === result) {
+            document.getElementById('feedback2').innerHTML = '<span class="correct">✓ Esatto!</span>';
+            drawHops(a, term2);
+        } else {
+            document.getElementById('feedback2').innerHTML = '<span class="error">✗ Errore di calcolo, riprova.</span>';
+        }
+    }
+
+   
+    // Inizializza al caricamento
+    window.onload = init;
+</script>
+
+</body>
+</html>
