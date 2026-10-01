@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allenamento: Ordine di Grandezza</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .math-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Rimuove freccette laterali dagli input numerici se presenti */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        /* Input dell'esponente integrato nell'apice */
+        .exp-input {
+            width: 2.5rem; /* ~40px */
+            text-align: center;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.375rem;
+            padding: 0.125rem;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #ffffff;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            outline: none;
+        }
+        .exp-input:focus {
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- HEADER E REGOLE VISIVE -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-amber-400 to-emerald-500"></div>
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6 mt-2">ODG:Ordine di Grandezza</h1>
+            
+            <div class="flex flex-col md:flex-row justify-center gap-4 text-left">
+                <!-- Regola 1 -->
+                <div class="flex-1 bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                    <div class="bg-blue-500 text-white font-bold px-2 py-1 rounded text-sm mt-0.5">&lt; 5</div>
+                    <div>
+                        <p class="font-bold text-blue-900 text-sm uppercase tracking-wide">coefficiente minore di 5</p>
+                        <p class="text-blue-700 text-sm mt-1">L'esponente <strong>resta uguale</strong>.</p>
+                    </div>
+                </div>
+                
+                <!-- Regola 2 -->
+                <div class="flex-1 bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                    <div class="bg-amber-500 text-white font-bold px-2 py-1 rounded text-sm mt-0.5">&ge; 5</div>
+                    <div>
+                        <p class="font-bold text-amber-900 text-sm uppercase tracking-wide">coefficiente maggiore o uguale a 5</p>
+                        <p class="text-amber-700 text-sm mt-1">L'esponente <strong>aumenta di 1 (+1)</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SEZIONI DEGLI ESERCIZI -->
+        <div class="flex flex-col gap-6">
+            
+            <!-- SEZIONE 1: coefficiente < 5 -->
+            <div class="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-200">
+                <h2 class="text-lg font-bold text-blue-800 mb-4 uppercase tracking-wide border-b border-blue-200 pb-2">
+                    1. La soglia non è superata (coefficiente &lt; 5)
+                </h2>
+                <div id="sec1-rows" class="flex flex-col gap-3">
+                    <!-- Inseriti da JS -->
+                </div>
+            </div>
+
+            <!-- SEZIONE 2: coefficiente >= 5 -->
+            <div class="bg-amber-50 p-6 rounded-2xl shadow-sm border border-amber-200">
+                <h2 class="text-lg font-bold text-amber-800 mb-4 uppercase tracking-wide border-b border-amber-200 pb-2">
+                    2. La soglia è superata (coefficiente &ge; 5)
+                </h2>
+                <div id="sec2-rows" class="flex flex-col gap-3">
+                    <!-- Inseriti da JS -->
+                </div>
+            </div>
+
+            <!-- SEZIONE 3: Forma Estesa -->
+            <div class="bg-emerald-50 p-6 rounded-2xl shadow-sm border border-emerald-200">
+                <h2 class="text-lg font-bold text-emerald-800 mb-4 uppercase tracking-wide border-b border-emerald-200 pb-2">
+                    3. Dalla forma estesa (Scomponi e decidi)
+                </h2>
+                <div id="sec3-rows" class="flex flex-col gap-3">
+                    <!-- Inseriti da JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PULSANTI AZIONE -->
+        <div class="mt-4 mb-8 flex flex-col md:flex-row gap-4 border-t border-slate-200 pt-6">
+            <button onclick="verifyAnswers()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2 text-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                VERIFICA SCHEDA
+            </button>
+            <button onclick="generateSheet()" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 font-bold py-4 px-6 rounded-xl border-2 border-slate-300 shadow-sm transition-colors flex justify-center items-center gap-2 text-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                GENERA NUOVA SCHEDA
+            </button>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        // --- STREAMING_CHUNK:Logica di Generazione Dati... ---
+        
+        const units = ['kg', 'm', 'J', 'W', 's', 'Hz'];
+        let currentAnswers = {}; // Mappa id_input -> risposta_corretta
+
+        // Formatta numero in forma estesa (es: "45 000" o "0,0045")
+        function formatExtended(mFloat, exp) {
+            // Eliminiamo il punto decimale per ricavare le cifre esatte (es 4.5 -> "45")
+            let mStr = mFloat.toFixed(1).replace('.', ''); 
+            
+            if (exp > 0) {
+                // Aggiungiamo zeri a destra
+                let zeros = exp - 1;
+                let raw = mStr + '0'.repeat(Math.max(0, zeros));
+                // Aggiungiamo lo spazio per le migliaia (da destra a sinistra)
+                return raw.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            } else if (exp < 0) {
+                // Aggiungiamo zeri dopo la virgola (es: exp -3, aggiunge due zeri -> 0,0045)
+                let zerosAfterComma = Math.abs(exp) - 1;
+                return "0," + "0".repeat(zerosAfterComma) + mStr;
+            } else {
+                return mFloat.toFixed(1).replace('.', ','); // Se esponente = 0
+            }
+        }
+
+        // Filtro input: accetta solo numeri e il segno meno all'inizio
+        function handleInputFilter(e) {
+            let val = e.target.value;
+            // Tieni solo numeri e '-'
+            val = val.replace(/[^\d-]/g, '');
+            // Se c'è un meno, assicurati che sia solo alla prima posizione
+            if (val.indexOf('-') > 0) {
+                val = val.replace(/-/g, '');
+            }
+            e.target.value = val;
+            
+            // Rimuove eventuali stili di errore/successo appena l'utente digita
+            e.target.classList.remove('border-red-500', 'bg-red-100', 'border-green-500', 'bg-green-100');
+        }
+
+        function createRowHTML(sectionPrefix, index, displayLeft, displayUnit, inputId) {
+            return `
+                <div class="flex items-center justify-between bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                    
+                    <!-- Sinistra: Testo Problema -->
+                    <div class="w-1/2 text-right md:text-left font-bold text-slate-700 text-lg math-font pl-2">
+                        ${displayLeft} <span class="text-slate-500 font-normal ml-1">${displayUnit}</span>
+                    </div>
+                    
+                    <!-- Centro: Freccia (Nascosta su mobile per spazio, visibile da md in su) -->
+                    <div class="hidden md:block w-1/6 text-center text-slate-300 text-2xl font-bold">
+                        &rightarrow;
+                    </div>
+
+                    <!-- Destra: Input OdG -->
+                    <div class="w-1/2 md:w-1/3 flex items-center justify-end gap-2 text-slate-800 math-font font-bold pr-2">
+                        <span class="text-slate-500 mr-2 md:hidden">&rarr;</span>
+                        <span class="text-base md:text-lg tracking-widest text-slate-700">10</span>
+                        <sup class="-ml-1">
+                            <input type="text" id="${inputId}" class="exp-input text-slate-900" placeholder="?" autocomplete="off">
+                        </sup>
+                        <div id="icon-${inputId}" class="w-6 h-6 flex items-center justify-center text-xl ml-2"></div>
+                    </div>
+                    
+                </div>
+            `;
+        }
+
+        function generateSheet() {
+            currentAnswers = {};
+            
+            // --- STREAMING_CHUNK:Generazione Sezione 1 (< 5)... ---
+            const sec1 = document.getElementById('sec1-rows');
+            sec1.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                // coefficiente da 1.0 a 4.9
+                let mFloat = (Math.floor(Math.random() * 40) + 10) / 10;
+                let exp = Math.floor(Math.random() * 17) - 8; // -8 a +8
+                if(exp === 0) exp = 3; // Evitiamo lo 0 per non creare confusione
+                
+                let unit = units[Math.floor(Math.random() * units.length)];
+                let displayStr = `${mFloat.toFixed(1).replace('.', ',')} &times; 10<sup class="text-xs">${exp}</sup>`;
+                
+                let inputId = `s1-input-${i}`;
+                currentAnswers[inputId] = exp; // Regola: <5, exp resta uguale
+                
+                sec1.innerHTML += createRowHTML('s1', i, displayStr, unit, inputId);
+            }
+
+            // --- STREAMING_CHUNK:Generazione Sezione 2 (>= 5)... ---
+            const sec2 = document.getElementById('sec2-rows');
+            sec2.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                // coefficiente da 5.0 a 9.9
+                let mFloat = (Math.floor(Math.random() * 50) + 50) / 10;
+                let exp = Math.floor(Math.random() * 17) - 8;
+                if(exp === 0) exp = -3;
+                
+                let unit = units[Math.floor(Math.random() * units.length)];
+                let displayStr = `${mFloat.toFixed(1).replace('.', ',')} &times; 10<sup class="text-xs">${exp}</sup>`;
+                
+                let inputId = `s2-input-${i}`;
+                currentAnswers[inputId] = exp + 1; // Regola: >=5, exp aumenta di 1
+                
+                sec2.innerHTML += createRowHTML('s2', i, displayStr, unit, inputId);
+            }
+
+            // --- STREAMING_CHUNK:Generazione Sezione 3 (Forma Estesa)... ---
+            const sec3 = document.getElementById('sec3-rows');
+            sec3.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                // coefficiente random da 1.0 a 9.9
+                let mFloat = (Math.floor(Math.random() * 89) + 11) / 10;
+                // Esponente contenuto per non generare numeri assurdamente lunghi (da -5 a +5)
+                let exp = Math.floor(Math.random() * 11) - 5;
+                if(exp === 0) exp = 2;
+                
+                let unit = units[Math.floor(Math.random() * units.length)];
+                let displayStr = formatExtended(mFloat, exp);
+                
+                let inputId = `s3-input-${i}`;
+                currentAnswers[inputId] = (mFloat >= 5.0) ? exp + 1 : exp;
+                
+                sec3.innerHTML += createRowHTML('s3', i, displayStr, unit, inputId);
+            }
+
+            // Riapplica i listener di validazione digitazione a tutti i nuovi input
+            document.querySelectorAll('.exp-input').forEach(input => {
+                input.addEventListener('input', handleInputFilter);
+            });
+        }
+
+        // --- STREAMING_CHUNK:Logica di Verifica... ---
+        function verifyAnswers() {
+            Object.keys(currentAnswers).forEach(inputId => {
+                let inputEl = document.getElementById(inputId);
+                let iconEl = document.getElementById(`icon-${inputId}`);
+                let correctVal = currentAnswers[inputId];
+                
+                let userValStr = inputEl.value.trim();
+                let userVal = parseInt(userValStr);
+
+                // Reset Classi
+                inputEl.classList.remove('border-green-500', 'bg-green-100', 'border-red-500', 'bg-red-100', 'border-slate-300');
+                
+                // Campo Vuoto o Non Valido
+                if (userValStr === "" || isNaN(userVal)) {
+                    iconEl.innerHTML = '⚠️';
+                    inputEl.classList.add('border-red-500', 'bg-red-100');
+                    return;
+                }
+
+                // Confronto Numerico
+                if (userVal === correctVal) {
+                    iconEl.innerHTML = '✅';
+                    inputEl.classList.add('border-green-500', 'bg-green-100');
+                } else {
+                    iconEl.innerHTML = '❌';
+                    inputEl.classList.add('border-red-500', 'bg-red-100');
+                }
+            });
+        }
+
+        // Init all'avvio
+        window.onload = generateSheet;
+
+    </script>
+</body>
+</html>
