@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definizioni sui Numeri Interi</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22; /* Arancione per distinguersi dalle schede precedenti */
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #fdfbf7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .exercise-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.2em;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .exercise-card.correct {
+            border-color: var(--success);
+            background-color: #f1fdf5;
+        }
+        .exercise-card.error {
+            border-color: var(--danger);
+            background-color: #fdf3f2;
+        }
+        .question-text {
+            flex-grow: 1;
+            padding-right: 15px;
+        }
+        .question-text strong {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            letter-spacing: 1px;
+            color: #34495e;
+        }
+        
+        /* Stili per gli input */
+        select, input[type="number"] {
+            font-size: 1em;
+            padding: 8px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-weight: bold;
+            outline: none;
+            color: var(--primary);
+            background-color: #fff;
+            cursor: pointer;
+        }
+        input[type="number"] {
+            width: 80px;
+            text-align: center;
+            cursor: text;
+        }
+        select:focus, input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+        
+        .controls {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        button {
+            font-size: 1.2em;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        .btn-check { background-color: var(--accent); }
+        .btn-new { background-color: #95a5a6; }
+        
+        #score-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            min-height: 35px;
+        }
+        .feedback-icon {
+            width: 30px;
+            text-align: center;
+            font-size: 1.2em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Concordi, Discordi, Opposti e Valore Assoluto</h1>
+        <p>Leggi attentamente la richiesta e inserisci il valore corretto o seleziona la relazione.</p>
+    </div>
+
+    <div class="exercise-grid" id="grid">
+        <!-- Generazione dinamica esercizi -->
+    </div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="checkAnswers()">Verifica Risultati</button>
+        <button class="btn-new" onclick="generateExercises()">Genera Nuova Scheda</button>
+        <div id="score-display"></div>
+    </div>
+
+    <script>
+        const NUM_EXERCISES = 10;
+        let exerciseData = []; // Salva le risposte e il tipo di esercizio
+
+        // Genera un intero casuale escludendo lo zero
+        function getRandomInt(min, max) {
+            let val;
+            do { val = Math.floor(Math.random() * (max - min + 1)) + min; } while (val === 0);
+            return val;
+        }
+
+        // Formatta il numero con segno esplicito
+        function formatNumber(n) {
+            return n > 0 ? `+${n}` : `${n}`;
+        }
+
+        function generateExercises() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = ''; 
+            exerciseData = [];
+            document.getElementById('score-display').innerHTML = '';
+
+            for (let i = 0; i < NUM_EXERCISES; i++) {
+                // 3 tipi di domande: 0 = Relazione, 1 = Valore Assoluto, 2 = Opposto
+                let questionType = Math.floor(Math.random() * 3);
+                
+                let questionHtml = '';
+                let inputHtml = '';
+                let correctAnswer = '';
+
+                if (questionType === 0) {
+                    // Relazione (Concordi, Discordi, Opposti)
+                    let relType = Math.floor(Math.random() * 3);
+                    let num1, num2;
+                    
+                    if (relType === 0) {
+                        // Concordi
+                        let sign = Math.random() > 0.5 ? 1 : -1;
+                        num1 = getRandomInt(1, 20) * sign;
+                        do { num2 = getRandomInt(1, 20) * sign; } while (num1 === num2);
+                        correctAnswer = 'concordi';
+                    } else if (relType === 1) {
+                        // Discordi (non opposti)
+                        num1 = getRandomInt(1, 20);
+                        num2 = -getRandomInt(1, 20);
+                        if (num1 === Math.abs(num2)) num2 = -(Math.abs(num2) === 20 ? 19 : Math.abs(num2) + 1);
+                        if (Math.random() > 0.5) { let temp = num1; num1 = num2; num2 = temp; }
+                        correctAnswer = 'discordi';
+                    } else {
+                        // Opposti
+                        num1 = getRandomInt(1, 20);
+                        num2 = -num1;
+                        if (Math.random() > 0.5) { let temp = num1; num1 = num2; num2 = temp; }
+                        correctAnswer = 'opposti';
+                    }
+
+                    questionHtml = `I numeri <strong>${formatNumber(num1)}</strong> e <strong>${formatNumber(num2)}</strong> sono:`;
+                    inputHtml = `
+                        <select id="input-${i}">
+                            <option value="">Scegli...</option>
+                            <option value="concordi">Concordi</option>
+                            <option value="discordi">Discordi</option>
+                            <option value="opposti">Opposti</option>
+                        </select>
+                    `;
+
+                } else if (questionType === 1) {
+                    // Valore Assoluto
+                    let num = getRandomInt(-20, 20);
+                    correctAnswer = Math.abs(num).toString();
+                    questionHtml = `Il valore assoluto di <strong>${formatNumber(num)}</strong> è:`;
+                    inputHtml = `<input type="number" id="input-${i}" autocomplete="off" placeholder="es. 5">`;
+
+                } else {
+                    // Opposto
+                    let num = getRandomInt(-20, 20);
+                    correctAnswer = (-num).toString();
+                    questionHtml = `L'opposto di <strong>${formatNumber(num)}</strong> è:`;
+                    inputHtml = `<input type="number" id="input-${i}" autocomplete="off" placeholder="es. -5">`;
+                }
+
+                exerciseData.push({ type: questionType, answer: correctAnswer });
+
+                // Creazione DOM
+                const card = document.createElement('div');
+                card.className = 'exercise-card';
+                card.id = `card-${i}`;
+
+                const qText = document.createElement('div');
+                qText.className = 'question-text';
+                qText.innerHTML = questionHtml;
+
+                const inputContainer = document.createElement('div');
+                inputContainer.innerHTML = inputHtml;
+
+                const icon = document.createElement('div');
+                icon.className = 'feedback-icon';
+                icon.id = `icon-${i}`;
+
+                card.appendChild(qText);
+                card.appendChild(inputContainer);
+                card.appendChild(icon);
+                grid.appendChild(card);
+
+                // Gestione del tasto Invio per gli input testuali
+                const inputElement = document.getElementById(`input-${i}`);
+                if(inputElement.tagName === 'INPUT') {
+                    inputElement.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            let nextIndex = i + 1;
+                            while(nextIndex < NUM_EXERCISES && document.getElementById(`input-${nextIndex}`).tagName === 'SELECT') {
+                                nextIndex++; // Salta le select con l'invio
+                            }
+                            if (nextIndex < NUM_EXERCISES) document.getElementById(`input-${nextIndex}`).focus();
+                            else checkAnswers();
+                        }
+                    });
+                }
+            }
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            let allAnswered = true;
+
+            for (let i = 0; i < NUM_EXERCISES; i++) {
+                const inputElement = document.getElementById(`input-${i}`);
+                const card = document.getElementById(`card-${i}`);
+                const icon = document.getElementById(`icon-${i}`);
+                const userAnswer = inputElement.value.trim().toLowerCase();
+                const expected = exerciseData[i].answer;
+                const type = exerciseData[i].type;
+
+                card.className = 'exercise-card';
+                icon.innerHTML = '';
+
+                if (userAnswer === '') {
+                    allAnswered = false;
+                    continue;
+                }
+
+                let isCorrect = false;
+
+                if (type === 0) {
+                    // Select: controllo stringa
+                    isCorrect = (userAnswer === expected);
+                } else {
+                    // Input numerico (valore assoluto o opposto)
+                    // parseInt converte correttamente stringhe come "+5" o "5" in intero 5
+                    isCorrect = (parseInt(userAnswer) === parseInt(expected));
+                }
+
+                if (isCorrect) {
+                    card.classList.add('correct');
+                    icon.innerHTML = '✅';
+                    score++;
+                } else {
+                    card.classList.add('error');
+                    icon.innerHTML = '❌';
+                }
+            }
+
+            const scoreDisplay = document.getElementById('score-display');
+            if (!allAnswered) {
+                scoreDisplay.style.color = '#e67e22';
+                scoreDisplay.innerHTML = `Hai lasciato delle risposte vuote. Completa tutto!`;
+            } else {
+                let color = score === NUM_EXERCISES ? '#27ae60' : (score > 5 ? '#e67e22' : '#e74c3c');
+                scoreDisplay.style.color = color;
+                
+                let message = `Punteggio: ${score} / ${NUM_EXERCISES}`;
+                if (score === NUM_EXERCISES) message += " - Perfetto! Hai padronanza delle definizioni.";
+                
+                scoreDisplay.innerHTML = message;
+            }
+        }
+
+        // Avvio automatico
+        window.onload = generateExercises;
+    </script>
+</body>
+</html>
