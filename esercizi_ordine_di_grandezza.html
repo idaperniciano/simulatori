@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esercizi Ordine di Grandezza</title>
+    <title>Ordine di Grandezza</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,14 +38,14 @@
         
         <!-- Intestazione -->
         <header class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center">
-            <h1 class="text-3xl font-bold text-slate-800 mb-4">L'Ordine di Grandezza</h1>
+            <h1 class="text-3xl font-bold text-slate-800 mb-4">Esercizi Ordine di Grandezza</h1>
             
             <!-- Box Promemoria -->
             <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-left shadow-sm inline-block max-w-3xl w-full">
                 <h2 class="font-bold text-amber-800 text-lg mb-1">Regola della Soglia del 5:</h2>
                 <ul class="list-disc pl-5 text-amber-900 text-sm md:text-base space-y-1">
-                    <li>Se il numero davanti (mantissa) è <strong>minore di 5</strong> (< 5), l'esponente dell'ordine di grandezza <strong>rimane uguale</strong>.</li>
-                    <li>Se il numero davanti (mantissa) è <strong>maggiore o uguale a 5</strong> (&ge; 5), l'esponente <strong>aumenta di +1</strong>.</li>
+                    <li>Se il numero davanti (coefficiente) è <strong>minore di 5</strong> (< 5), l'esponente dell'ordine di grandezza <strong>rimane uguale</strong>.</li>
+                    <li>Se il numero davanti (coefficiente) è <strong>maggiore o uguale a 5</strong> (&ge; 5), l'esponente <strong>aumenta di +1</strong>.</li>
                 </ul>
             </div>
         </header>
@@ -76,8 +76,8 @@
         let rowData = [];
 
         // Funzione per formattare la stringa del numero esteso (gestisce spazi per migliaia e virgola)
-        function formatExtended(mantissaStr, exponent) {
-            let mDigits = mantissaStr.replace('.', ''); // es: "4.9" -> "49"
+        function formatExtended(coefficienteStr, exponent) {
+            let mDigits = coefficienteStr.replace('.', ''); // es: "4.9" -> "49"
             
             if (exponent > 0) {
                 // Per numeri grandi aggiungiamo zeri a destra
@@ -97,20 +97,20 @@
         }
 
         function createExerciseRowData() {
-            let mantissa;
+            let coefficiente;
             // 35% di probabilità di generare un caso trappola sulla soglia del 5
             let isEdgeCase = Math.random() < 0.35;
             
             if (isEdgeCase) {
-                // Genera mantissa tra 4.5 e 5.4
-                mantissa = (Math.floor(Math.random() * 10) + 45) / 10;
+                // Genera coefficiente tra 4.5 e 5.4
+                coefficiente = (Math.floor(Math.random() * 10) + 45) / 10;
             } else {
-                // Genera mantissa generica tra 1.1 e 9.9
-                mantissa = (Math.floor(Math.random() * 89) + 11) / 10;
+                // Genera coefficiente generica tra 1.1 e 9.9
+                coefficiente = (Math.floor(Math.random() * 89) + 11) / 10;
             }
             
-            let mantissaStr = mantissa.toFixed(1); // Es: "5.0"
-            mantissa = parseFloat(mantissaStr); // Assicura precisione perfetta
+            let coefficienteStr = coefficiente.toFixed(1); // Es: "5.0"
+            coefficiente = parseFloat(coefficienteStr); // Assicura precisione perfetta
 
             let exponent;
             // Esponenti da -8 a +8, escludendo 0 e 1 per evitare banalità e ambiguità
@@ -121,13 +121,13 @@
             let unit = units[Math.floor(Math.random() * units.length)];
 
             // Costruisce la visualizzazione estesa
-            let extendedFormatted = formatExtended(mantissaStr, exponent);
+            let extendedFormatted = formatExtended(coefficienteStr, exponent);
             
             // Costruisce la visualizzazione scientifica (sostituendo punto con virgola)
-            let sciFormatted = mantissaStr.replace('.', ',') + ' &times; 10<sup class="text-xs">' + exponent + '</sup>';
+            let sciFormatted = coefficienteStr.replace('.', ',') + ' &times; 10<sup class="text-xs">' + exponent + '</sup>';
 
             // Logica esatta dell'Ordine di Grandezza
-            let correctOdG = (mantissa >= 5.0) ? exponent + 1 : exponent;
+            let correctOdG = (coefficiente >= 5.0) ? exponent + 1 : exponent;
 
             return {
                 extendedFormatted,
