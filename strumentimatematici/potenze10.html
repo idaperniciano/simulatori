@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprendere moltiplicazioni e divisioni per potenze di 10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        
+        /* Stile display matematico */
+        .math-display {
+            background-color: #ffffff;
+            border: 3px solid #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .virgola {
+            color: #ef4444; /* Rosso acceso per farla risaltare */
+            font-weight: 900;
+            display: inline-block;
+            transform: scale(1.2);
+            margin: 0 1px;
+        }
+
+        /* Pulsanti selezione */
+        .btn-select {
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .btn-select.active-mul { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .btn-select.active-div { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .btn-select.active-pow { background-color: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex justify-center">
+
+    <div class="w-full max-w-4xl bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-slate-200 space-y-8">
+        
+        <!-- Header -->
+        <div class="border-b border-slate-200 pb-4">
+            <h1 class="text-3xl font-extrabold text-slate-800">Moltiplicare e dividere per Potenze di 10</h1>
+            <p class="text-slate-500 mt-2">Visualizza l'effetto della moltiplicazione e della divisione sui numeri interi e decimali.</p>
+        </div>
+
+        <!-- FASE 1: Costruzione Operazione -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Numero -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">1. Numero Iniziale</label>
+                    <input type="text" id="input-numero" class="w-full text-2xl font-bold text-center mono py-3 px-4 rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none" placeholder="es. 45 o 0,08">
+                </div>
+
+                <!-- Operazione -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">2. Operazione</label>
+                    <div class="flex gap-2 h-[60px]">
+                        <button id="btn-mul" class="btn-select active-mul flex-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xl" onclick="setOp('mul')">×</button>
+                        <button id="btn-div" class="btn-select flex-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xl" onclick="setOp('div')">÷</button>
+                    </div>
+                </div>
+
+                <!-- Potenza -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">3. Potenza di 10</label>
+                    <select id="select-potenza" class="w-full h-[60px] text-xl font-bold text-center mono rounded-lg border-2 border-slate-300 focus:border-blue-500 focus:outline-none bg-white cursor-pointer">
+                        <option value="1">10¹ (10)</option>
+                        <option value="2">10² (100)</option>
+                        <option value="3" selected>10³ (1000)</option>
+                        <option value="4">10⁴ (10000)</option>
+                        <option value="5">10⁵ (100000)</option>
+                        <option value="6">10⁶ (1000000)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-center pt-4">
+                <button id="btn-esegui" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-10 rounded-xl shadow-md transition-transform active:scale-95 text-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Esegui Calcolo
+                </button>
+            </div>
+        </div>
+
+        <!-- FASE 2: Animazione e Risultato -->
+        <div id="area-risultato" class="hidden space-y-6">
+            
+            <!-- Equazione Formale -->
+            <div class="text-center">
+                <div id="equazione-display" class="text-3xl md:text-4xl font-extrabold text-slate-700 mono mb-4">
+                    <!-- Es: 45 × 10³ = ... -->
+                </div>
+            </div>
+
+            <!-- Schermo Animazione -->
+            <div class="math-display rounded-2xl py-12 px-4 text-center relative overflow-hidden bg-slate-50">
+                <div id="animazione-numero" class="text-6xl md:text-8xl font-extrabold mono text-slate-800 tracking-wider flex justify-center items-baseline">
+                    <!-- Numero animato -->
+                </div>
+            </div>
+
+            <!-- Spiegazione Didattica -->
+            <div id="box-spiegazione" class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center transition-opacity duration-500 opacity-0">
+                <p id="testo-spiegazione" class="text-lg md:text-xl font-semibold text-blue-900">
+                    <!-- Testo dinamico -->
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let operazione = 'mul'; // 'mul' o 'div'
+        
+        // Gestione UI Bottoni Operazione
+        function setOp(op) {
+            operazione = op;
+            document.getElementById('btn-mul').classList.remove('active-mul');
+            document.getElementById('btn-div').classList.remove('active-div');
+            
+            if (op === 'mul') {
+                document.getElementById('btn-mul').classList.add('active-mul');
+                document.getElementById('btn-mul').classList.remove('bg-slate-100');
+            } else {
+                document.getElementById('btn-div').classList.add('active-div');
+                document.getElementById('btn-div').classList.remove('bg-slate-100');
+            }
+        }
+
+        // Filtro Input Numerico
+        const inputNum = document.getElementById('input-numero');
+        inputNum.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/\./g, ',');
+            val = val.replace(/[^0-9,\-]/g, '');
+            const parts = val.split(',');
+            if (parts.length > 2) val = parts[0] + ',' + parts.slice(1).join('');
+            e.target.value = val;
+        });
+
+        // Funzioni matematiche di spostamento virgola sulle stringhe
+        function shiftRight(numStr) {
+            let isNeg = numStr.startsWith('-');
+            let raw = isNeg ? numStr.substring(1) : numStr;
+            let parts = raw.split(',');
+            let intP = parts[0];
+            let decP = parts[1] || "";
+            
+            if (decP.length > 0) {
+                intP += decP[0];
+                decP = decP.substring(1);
+            } else {
+                intP += "0";
+            }
+            
+            // Pulisce zeri iniziali
+            if (intP.length > 1 && intP.startsWith('0')) {
+                intP = intP.replace(/^0+/, '') || '0';
+            }
+            
+            let result = decP.length > 0 ? intP + ',' + decP : intP + ',';
+            return (isNeg ? '-' : '') + result;
+        }
+
+        function shiftLeft(numStr) {
+            let isNeg = numStr.startsWith('-');
+            let raw = isNeg ? numStr.substring(1) : numStr;
+            let parts = raw.split(',');
+            let intP = parts[0];
+            let decP = parts[1] || "";
+            
+            if (intP.length > 0 && intP !== "0") {
+                decP = intP[intP.length - 1] + decP;
+                intP = intP.substring(0, intP.length - 1);
+                if (intP === "") intP = "0";
+            } else {
+                decP = "0" + decP;
+                intP = "0";
+            }
+            
+            let result = intP + ',' + decP;
+            return (isNeg ? '-' : '') + result;
+        }
+
+        function formattaHTML(numStr) {
+            let parts = numStr.split(',');
+            if (parts.length === 1) return `<span>${numStr}</span>`;
+            return `<span>${parts[0]}</span><span class="virgola">,</span><span>${parts[1]}</span>`;
+        }
+
+        // Delay per l'animazione
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        // Avvio Calcolo
+        document.getElementById('btn-esegui').addEventListener('click', async () => {
+            let val = inputNum.value.trim();
+            if (!val || val === '-') {
+                inputNum.focus();
+                return;
+            }
+
+            // Normalizzazione iniziale
+            if (!val.includes(',')) val += ',';
+            
+            const esp = parseInt(document.getElementById('select-potenza').value);
+            const segnoOp = operazione === 'mul' ? '×' : '÷';
+            
+            // Setup UI
+            document.getElementById('area-risultato').classList.remove('hidden');
+            const eqDisplay = document.getElementById('equazione-display');
+            const animDisplay = document.getElementById('animazione-numero');
+            const boxSpiegazione = document.getElementById('box-spiegazione');
+            
+            boxSpiegazione.classList.add('opacity-0');
+            eqDisplay.innerHTML = `${val.endsWith(',') ? val.slice(0,-1) : val} ${segnoOp} 10<sup>${esp}</sup> = <span class="text-slate-300">?</span>`;
+            
+            document.getElementById('btn-esegui').disabled = true;
+            document.getElementById('btn-esegui').classList.add('opacity-50');
+
+            // ANIMAZIONE
+            let currentStr = val;
+            animDisplay.innerHTML = formattaHTML(currentStr);
+            await sleep(800);
+
+            for (let i = 0; i < esp; i++) {
+                if (operazione === 'mul') currentStr = shiftRight(currentStr);
+                else currentStr = shiftLeft(currentStr);
+                
+                animDisplay.innerHTML = formattaHTML(currentStr);
+                await sleep(750); // Pausa per far seguire l'occhio
+            }
+
+            // Pulizia finale visiva (rimuove virgola volante)
+            let resultStr = currentStr;
+            if (resultStr.endsWith(',')) resultStr = resultStr.slice(0, -1);
+            animDisplay.innerHTML = formattaHTML(resultStr);
+
+            // Aggiorna l'equazione in alto col risultato
+            eqDisplay.innerHTML = `${val.endsWith(',') ? val.slice(0,-1) : val} ${segnoOp} 10<sup>${esp}</sup> = <span class="text-blue-600">${resultStr}</span>`;
+
+            // Mostra Spiegazione Didattica
+            const testoS = document.getElementById('testo-spiegazione');
+            if (operazione === 'mul') {
+                testoS.innerHTML = `Moltiplicare per 10<sup>${esp}</sup> fa <strong class="text-green-700">ingrandire</strong> il numero.<br>La virgola si è spostata di <strong>${esp} posizion${esp>1?'i':'e'} verso DESTRA</strong>.`;
+            } else {
+                testoS.innerHTML = `Dividere per 10<sup>${esp}</sup> fa <strong class="text-red-700">rimpicciolire</strong> il numero.<br>La virgola si è spostata di <strong>${esp} posizion${esp>1?'i':'e'} verso SINISTRA</strong>.`;
+            }
+            
+            boxSpiegazione.classList.remove('opacity-0');
+            document.getElementById('btn-esegui').disabled = false;
+            document.getElementById('btn-esegui').classList.remove('opacity-50');
+        });
+
+    </script>
+</body>
+</html>
