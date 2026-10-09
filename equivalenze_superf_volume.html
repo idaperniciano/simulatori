@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equivalenze Master: Superfici e Volumi</title>
+    <!-- Tailwind CSS per uno styling rapido e moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter per leggibilità e Fredoka One per i titoli accattivanti -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Fredoka One', 'cursive'],
+                    },
+                    colors: {
+                        primary: '#4F46E5', // Indigo 600
+                        secondary: '#10B981', // Emerald 500
+                        accent: '#F59E0B', // Amber 500
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F3F4F6;
+            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .tab-btn.active {
+            background-color: white;
+            color: #4F46E5;
+            border-bottom: 4px solid #4F46E5;
+            font-weight: 700;
+        }
+        
+        .stair-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            padding-bottom: 2rem;
+        }
+
+        .step-box {
+            transition: all 0.3s ease;
+        }
+        
+        .step-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .arrow-down, .arrow-up {
+            position: absolute;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #6B7280;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+        }
+        
+        /* Animazioni di feedback */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.5s; }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .pop { animation: pop 0.4s ease-out; }
+    </style>
+</head>
+<body class="min-h-screen font-sans text-gray-800 pb-12">
+
+    <header class="bg-primary text-white py-6 shadow-md mb-8">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-display mb-2 drop-shadow-sm">Equivalenze Master 🚀</h1>
+            <p class="text-indigo-100 text-lg">Impara a domare Superfici e Volumi senza paura!</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4">
+        <!-- Tabs Navigation -->
+        <div class="flex justify-center mb-6 bg-gray-200 rounded-t-xl overflow-hidden shadow-inner">
+            <button onclick="switchTab('theory')" id="tab-theory" class="tab-btn active flex-1 py-4 text-lg font-semibold text-gray-500 transition-colors">
+                📚 Teoria e Salti
+            </button>
+            <button onclick="switchTab('practice')" id="tab-practice" class="tab-btn flex-1 py-4 text-lg font-semibold text-gray-500 transition-colors">
+                🏋️‍♂️ Palestra
+            </button>
+        </div>
+
+        <!-- THEORY SECTION -->
+        <section id="section-theory" class="bg-white rounded-b-xl rounded-t-none md:rounded-xl shadow-lg p-6 md:p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">La Scala delle Equivalenze</h2>
+                <div class="inline-flex bg-gray-100 p-1 rounded-lg">
+                    <button onclick="toggleTheoryType('area')" id="btn-theory-area" class="px-6 py-2 rounded-md bg-white shadow text-primary font-bold transition-all">Superfici (m²)</button>
+                    <button onclick="toggleTheoryType('volume')" id="btn-theory-volume" class="px-6 py-2 rounded-md text-gray-500 hover:text-gray-700 font-bold transition-all">Volumi (m³)</button>
+                </div>
+            </div>
+
+            <!-- Dynamic Stairs Visualization -->
+            <div class="relative bg-blue-50 rounded-xl p-8 border border-blue-100 mb-8 overflow-x-auto">
+                
+                <!-- Left Arrows (Division) -->
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center text-red-500 font-bold hidden md:flex">
+                    <span>⬆️ SI SALE</span>
+                    <div id="theory-divide-rule" class="bg-white px-3 py-1 rounded-full shadow text-sm mt-2 border border-red-200 text-center">
+                        Dividi per 100<br>ad ogni gradino
+                    </div>
+                </div>
+
+                <!-- Right Arrows (Multiplication) -->
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center text-secondary font-bold hidden md:flex">
+                    <span>SI SCENDE ⬇️</span>
+                    <div id="theory-multiply-rule" class="bg-white px-3 py-1 rounded-full shadow text-sm mt-2 border border-green-200 text-center">
+                        Moltiplica per 100<br>ad ogni gradino
+                    </div>
+                </div>
+
+                <!-- Staircase layout -->
+                <div id="staircase" class="stair-container max-w-lg mx-auto">
+                    <!-- Javascript will populate this -->
+                </div>
+            </div>
+
+            <!-- Explanation Box -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg">
+                <h3 class="text-xl font-bold text-yellow-800 mb-2" id="theory-explain-title">Perché moltiplico per 100?</h3>
+                <p class="text-gray-700 leading-relaxed" id="theory-explain-text">
+                    Pensa a un quadrato di 1 metro per lato. La sua area è 1 m².<br>
+                    Poiché 1 metro equivale a 10 decimetri (dm), il nostro quadrato ha i lati lunghi 10 dm.<br>
+                    Quindi, l'area in decimetri quadrati sarà: 10 dm × 10 dm = <strong>100 dm²</strong>.<br>
+                    Ecco perché per passare da m² a dm² devi moltiplicare per 100! (Ogni dimensione "lineare" porta con sé uno zero, e in 2D gli zeri raddoppiano).
+                </p>
+            </div>
+        </section>
+
+        <!-- PRACTICE SECTION (HIDDEN BY DEFAULT) -->
+        <section id="section-practice" class="bg-white rounded-b-xl rounded-t-none md:rounded-xl shadow-lg p-6 md:p-8 hidden">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div class="mb-4 md:mb-0">
+                    <span class="text-gray-500 font-semibold mr-2">Modalità:</span>
+                    <select id="practice-mode" onchange="generateQuestion()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 outline-none font-bold">
+                        <option value="mixed">Miste (Area e Volume)</option>
+                        <option value="area">Solo Superfici (m²)</option>
+                        <option value="volume">Solo Volumi (m³)</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-4 text-xl font-display">
+                    <div class="text-secondary">Punti: <span id="score-correct">0</span></div>
+                    <div class="text-red-500">Errori: <span id="score-wrong">0</span></div>
+                </div>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="max-w-2xl mx-auto text-center">
+                <p class="text-gray-500 mb-2 font-medium">Converti la seguente misura:</p>
+                
+                <div class="bg-gradient-to-br from-indigo-50 to-blue-100 p-8 rounded-2xl shadow-sm border border-indigo-100 mb-6">
+                    <div class="text-4xl md:text-5xl font-display text-gray-800 mb-8 flex flex-wrap justify-center items-center gap-4">
+                        <span id="q-value" class="text-primary bg-white px-4 py-2 rounded-lg shadow-sm">4.5</span>
+                        <span id="q-from-unit" class="text-gray-600">m²</span>
+                        <span class="text-2xl text-gray-400">=</span>
+                        <span id="q-to-unit" class="text-gray-600">cm²</span>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-4">
+                        <input type="text" id="answer-input" placeholder="Scrivi il risultato..." class="w-full md:w-64 px-4 py-3 text-xl text-center rounded-xl border-2 border-indigo-200 focus:border-primary focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-inner font-mono">
+                        <button onclick="checkAnswer()" class="w-full md:w-auto bg-primary hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 active:scale-95 shadow-md">
+                            Controlla ✔️
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-area" class="min-h-[100px] mb-6 flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
+                    <div id="feedback-icon" class="text-5xl mb-2"></div>
+                    <h3 id="feedback-title" class="text-2xl font-bold mb-1"></h3>
+                    <p id="feedback-text" class="text-gray-600 font-medium"></p>
+                    <button onclick="generateQuestion()" id="btn-next" class="mt-4 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg transition-colors hidden">
+                        Prossima Domanda ➡️
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- DATA STRUCTURES ---
+        const units = ['km', 'hm', 'dam', 'm', 'dm', 'cm', 'mm'];
+        
+        let currentTheoryType = 'area'; // 'area' or 'volume'
+        
+        // Quiz State
+        let currentQuestion = {
+            value: 0,
+            fromIdx: 0,
+            toIdx: 0,
+            type: 'area', // 'area' or 'volume'
+            correctAnswer: 0
+        };
+        let score = { correct: 0, wrong: 0 };
+
+        // --- UI FUNCTIONS ---
+        
+        function switchTab(tab) {
+            document.getElementById('section-theory').classList.add('hidden');
+            document.getElementById('section-practice').classList.add('hidden');
+            document.getElementById('tab-theory').classList.remove('active');
+            document.getElementById('tab-practice').classList.remove('active');
+
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            if(tab === 'practice' && currentQuestion.value === 0) {
+                generateQuestion();
+            }
+        }
+
+        function toggleTheoryType(type) {
+            currentTheoryType = type;
+            
+            const btnArea = document.getElementById('btn-theory-area');
+            const btnVolume = document.getElementById('btn-theory-volume');
+            
+            if (type === 'area') {
+                btnArea.className = "px-6 py-2 rounded-md bg-white shadow text-primary font-bold transition-all";
+                btnVolume.className = "px-6 py-2 rounded-md text-gray-500 hover:text-gray-700 font-bold transition-all";
+                
+                document.getElementById('theory-divide-rule').innerHTML = "Dividi per 100<br>ad ogni gradino";
+                document.getElementById('theory-multiply-rule').innerHTML = "Moltiplica per 100<br>ad ogni gradino";
+                
+                document.getElementById('theory-explain-title').innerText = "Perché moltiplico per 100?";
+                document.getElementById('theory-explain-text').innerHTML = `
+                    Pensa a un quadrato di 1 metro per lato. La sua area è 1 m².<br>
+                    Poiché 1 metro equivale a 10 decimetri (dm), il nostro quadrato ha i lati lunghi 10 dm.<br>
+                    Quindi, l'area in decimetri quadrati sarà: 10 dm × 10 dm = <strong>100 dm²</strong>.<br>
+                    Ecco perché per passare da m² a dm² devi moltiplicare per 100! (L'esponente ² ci ricorda che gli zeri sono 2).
+                `;
+            } else {
+                btnVolume.className = "px-6 py-2 rounded-md bg-white shadow text-primary font-bold transition-all";
+                btnArea.className = "px-6 py-2 rounded-md text-gray-500 hover:text-gray-700 font-bold transition-all";
+                
+                document.getElementById('theory-divide-rule').innerHTML = "Dividi per 1000<br>ad ogni gradino";
+                document.getElementById('theory-multiply-rule').innerHTML = "Moltiplica per 1000<br>ad ogni gradino";
+                
+                document.getElementById('theory-explain-title').innerText = "Perché moltiplico per 1000?";
+                document.getElementById('theory-explain-text').innerHTML = `
+                    Pensa a un cubo con lo spigolo di 1 metro. Il suo volume è 1 m³.<br>
+                    Poiché 1 metro equivale a 10 decimetri (dm), il cubo ha gli spigoli di 10 dm.<br>
+                    Quindi, il volume in decimetri cubi sarà: 10 dm × 10 dm × 10 dm = <strong>1000 dm³</strong>.<br>
+                    Ecco perché per passare da m³ a dm³ devi moltiplicare per 1000! (L'esponente ³ ci ricorda che gli zeri sono 3).
+                `;
+            }
+            
+            renderStaircase();
+        }
+
+        function renderStaircase() {
+            const container = document.getElementById('staircase');
+            container.innerHTML = '';
+            
+            const suffix = currentTheoryType === 'area' ? '²' : '³';
+            const multiplier = currentTheoryType === 'area' ? '×100' : '×1000';
+            const divider = currentTheoryType === 'area' ? '÷100' : '÷1000';
+
+            units.forEach((unit, index) => {
+                // Create step wrapper
+                const stepRow = document.createElement('div');
+                stepRow.className = 'flex items-center w-full justify-center relative mb-2';
+                
+                // Add horizontal offset to create stair effect
+                const offset = (index - 3) * -40; // Center is 'm'
+                
+                const box = document.createElement('div');
+                box.className = `step-box px-6 py-3 rounded-lg font-display text-xl border-b-4 relative z-10 w-32 text-center
+                    ${index === 3 ? 'bg-primary text-white border-indigo-800' : 'bg-white text-gray-800 border-gray-300'}`;
+                box.style.transform = `translateX(${offset}px)`;
+                box.innerHTML = `${unit}${suffix}`;
+                
+                // Arrows logic (rendered between steps)
+                if (index < units.length - 1) {
+                    const arrowLine = document.createElement('div');
+                    arrowLine.className = 'absolute top-full w-full h-8 flex justify-center text-xs opacity-60';
+                    arrowLine.style.transform = `translateX(${offset - 20}px)`; // Midpoint offset
+                    
+                    arrowLine.innerHTML = `
+                        <div class="mr-16 text-red-600 font-bold whitespace-nowrap">↑ ${divider}</div>
+                        <div class="ml-16 text-green-600 font-bold whitespace-nowrap">↓ ${multiplier}</div>
+                    `;
+                    box.appendChild(arrowLine);
+                }
+
+                stepRow.appendChild(box);
+                container.appendChild(stepRow);
+            });
+        }
+
+        // --- MATH & LOGIC FUNCTIONS ---
+
+        function calculateCorrectAnswer(val, startIdx, endIdx, type) {
+            const stepValue = type === 'area' ? 2 : 3; // Powers of 10 per step (10^2=100, 10^3=1000)
+            const jumps = endIdx - startIdx; // positive if going right (multiply), negative if going left (divide)
+            
+            // Total power of 10 shift
+            const shift = jumps * stepValue; 
+            
+            // Calculate mathematically stringently to avoid JS float errors (e.g. 0.1 * 1000 = 100.00000000000001)
+            // String manipulation or exponential parsing is safer.
+            let res = val * Math.pow(10, shift);
+            
+            // Fix precision issues
+            res = parseFloat(res.toPrecision(12)); 
+            return res;
+        }
+
+        function generateQuestion() {
+            // Reset UI
+            const inputField = document.getElementById('answer-input');
+            inputField.value = '';
+            inputField.classList.remove('border-red-500', 'border-green-500', 'bg-red-50', 'bg-green-50');
+            inputField.disabled = false;
+            
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('feedback-area').classList.remove('opacity-100');
+            document.getElementById('btn-next').classList.add('hidden');
+            inputField.focus();
+
+            const modeSelector = document.getElementById('practice-mode').value;
+            
+            // Determine type
+            if (modeSelector === 'mixed') {
+                currentQuestion.type = Math.random() > 0.5 ? 'area' : 'volume';
+            } else {
+                currentQuestion.type = modeSelector;
+            }
+
+            // Determine units
+            // Limit the jump distance to keep it reasonable (max 3 jumps)
+            let startIdx, endIdx, jumps;
+            do {
+                startIdx = Math.floor(Math.random() * units.length);
+                endIdx = Math.floor(Math.random() * units.length);
+                jumps = Math.abs(startIdx - endIdx);
+            } while (startIdx === endIdx || jumps > 4); // Max 4 jumps
+
+            currentQuestion.fromIdx = startIdx;
+            currentQuestion.toIdx = endIdx;
+
+            // Generate a reasonable starting value
+            // Could be integer (e.g. 5, 25, 120) or simple decimal (e.g. 3.5, 0.4)
+            const isDecimal = Math.random() > 0.7;
+            let startValue;
+            if (isDecimal) {
+                startValue = (Math.random() * 9 + 1).toFixed(1); // 1.0 to 9.9
+            } else {
+                const multipliers = [1, 5, 10, 25, 50, 100];
+                startValue = multipliers[Math.floor(Math.random() * multipliers.length)] * (Math.floor(Math.random() * 9) + 1);
+            }
+            currentQuestion.value = parseFloat(startValue);
+
+            // Calculate exact answer
+            currentQuestion.correctAnswer = calculateCorrectAnswer(
+                currentQuestion.value, 
+                currentQuestion.fromIdx, 
+                currentQuestion.toIdx, 
+                currentQuestion.type
+            );
+
+            // Update UI
+            const suffix = currentQuestion.type === 'area' ? '²' : '³';
+            document.getElementById('q-value').innerText = currentQuestion.value;
+            document.getElementById('q-from-unit').innerText = units[currentQuestion.fromIdx] + suffix;
+            document.getElementById('q-to-unit').innerText = units[currentQuestion.toIdx] + suffix;
+        }
+
+        function checkAnswer() {
+            const inputField = document.getElementById('answer-input');
+            const userStr = inputField.value.trim().replace(',', '.'); // Allow comma or dot for decimals
+            
+            if (userStr === '') return;
+
+            const userVal = parseFloat(userStr);
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            const btnNext = document.getElementById('btn-next');
+
+            feedbackArea.classList.remove('hidden');
+            // Small delay for transition
+            setTimeout(() => {
+                feedbackArea.classList.add('opacity-100');
+            }, 50);
+
+            const isCorrect = Math.abs(userVal - currentQuestion.correctAnswer) < 1e-10; // epsilon comparison
+
+            if (isCorrect) {
+                // Correct logic
+                score.correct++;
+                document.getElementById('score-correct').innerText = score.correct;
+                
+                inputField.classList.add('border-green-500', 'bg-green-50');
+                inputField.disabled = true;
+                
+                feedbackIcon.innerText = "🎉";
+                feedbackIcon.className = "text-5xl mb-2 pop";
+                feedbackTitle.innerText = "Esatto!";
+                feedbackTitle.className = "text-2xl font-bold mb-1 text-green-600";
+                
+                const jumps = Math.abs(currentQuestion.fromIdx - currentQuestion.toIdx);
+                const stepWord = jumps === 1 ? 'gradino' : 'gradini';
+                const action = currentQuestion.fromIdx < currentQuestion.toIdx ? 'moltiplicato' : 'diviso';
+                const factor = currentQuestion.type === 'area' ? Math.pow(100, jumps) : Math.pow(1000, jumps);
+                
+                feedbackText.innerHTML = `Hai <b>${action}</b> per ${factor.toLocaleString('it-IT')} facendo ${jumps} ${stepWord}. Perfetto!`;
+                
+                btnNext.classList.remove('hidden');
+                btnNext.focus();
+            } else {
+                // Wrong logic
+                // Avoid incrementing wrong score multiple times per question
+                if (!inputField.classList.contains('border-red-500')) {
+                    score.wrong++;
+                    document.getElementById('score-wrong').innerText = score.wrong;
+                }
+
+                inputField.classList.add('border-red-500', 'bg-red-50');
+                inputField.classList.remove('shake'); // reset anim
+                void inputField.offsetWidth; // trigger reflow
+                inputField.classList.add('shake');
+
+                feedbackIcon.innerText = "🤔";
+                feedbackIcon.className = "text-5xl mb-2";
+                feedbackTitle.innerText = "Mmh, non ci siamo...";
+                feedbackTitle.className = "text-2xl font-bold mb-1 text-red-500";
+                
+                const jumps = Math.abs(currentQuestion.fromIdx - currentQuestion.toIdx);
+                const direction = currentQuestion.fromIdx < currentQuestion.toIdx ? 'scendendo ⬇️' : 'salendo ⬆️';
+                const factorBase = currentQuestion.type === 'area' ? 100 : 1000;
+
+                feedbackText.innerHTML = `Stai <b>${direction}</b> di ${jumps} gradin${jumps===1?'o':'i'}.<br>Ricorda la regola: ad ogni gradino devi ${currentQuestion.fromIdx < currentQuestion.toIdx ? 'moltiplicare' : 'dividere'} per ${factorBase}! Riprova.`;
+            }
+        }
+
+        // Allow 'Enter' key to trigger check/next
+        document.getElementById('answer-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            renderStaircase();
+            // Start in theory view
+            document.getElementById(`tab-theory`).classList.add('active');
+        };
+
+    </script>
+</body>
+</html>

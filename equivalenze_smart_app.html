@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SI Prefixes | Smart App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        glass: {
+                            DEFAULT: 'rgba(255, 255, 255, 0.05)',
+                            hover: 'rgba(255, 255, 255, 0.1)',
+                            active: 'rgba(59, 130, 246, 0.2)',
+                            border: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            /* Sfondo tech moderno */
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 40%, #020617);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Effetti Glassmorphism */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        /* Transizioni fluide */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar personalizzata per pulizia visiva */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased flex flex-col items-center py-6 px-4 md:py-12 md:px-8">
+
+    <!-- HEADER -->
+    <header class="w-full max-w-4xl text-center mb-8">
+        <h1 class="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight mb-3">
+            SI // Prefixes
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base font-medium">Naviga la scala delle grandezze fisiche.</p>
+    </header>
+
+    <!-- MAIN CONTAINER (Glassmorphism) -->
+    <main class="w-full max-w-4xl glass-panel rounded-3xl overflow-hidden flex flex-col">
+        
+        <!-- TABS NAV -->
+        <nav class="flex border-b border-glass-border">
+            <button onclick="switchTab('esplora')" id="tab-esplora" class="flex-1 py-5 text-sm md:text-base font-semibold text-white/70 hover:text-white hover:bg-glass transition-all border-b-2 border-transparent">
+                Esplora i Prefissi
+            </button>
+            <button onclick="switchTab('sfida')" id="tab-sfida" class="flex-1 py-5 text-sm md:text-base font-semibold text-white/70 hover:text-white hover:bg-glass transition-all border-b-2 border-transparent">
+                Sfida (Palestra)
+            </button>
+        </nav>
+
+        <!-- TAB 1: ESPLORA -->
+        <section id="section-esplora" class="p-6 md:p-8 flex-1">
+            <div class="mb-8">
+                <p class="text-slate-300 text-sm mb-4 text-center">Seleziona un prefisso per scoprirne i dettagli e le applicazioni reali.</p>
+                
+                <!-- Griglia interattiva dei prefissi -->
+                <div class="flex flex-wrap justify-center gap-2 md:gap-3" id="prefix-grid">
+                </div>
+            </div>
+
+            <!-- Info Card Dettaglio -->
+            <div id="info-card" class="bg-slate-900/50 rounded-2xl p-6 md:p-8 border border-white/10 hidden fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div class="flex items-center gap-4">
+                        <div id="info-symbol" class="w-16 h-16 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-3xl font-bold text-blue-400 font-mono shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                            T
+                        </div>
+                        <div>
+                            <h2 id="info-name" class="text-2xl md:text-3xl font-bold text-white tracking-wide">Tera</h2>
+                            <p class="text-slate-400 font-mono text-sm mt-1">Prefisso del Sistema Internazionale</p>
+                        </div>
+                    </div>
+                    <div class="text-left md:text-right">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Moltiplicatore</div>
+                        <div id="info-power" class="text-2xl md:text-3xl font-mono font-semibold text-emerald-400">
+                            10<sup id="info-exp">12</sup>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="border-white/10 my-4">
+                
+                <div>
+                    <div class="text-xs text-slate-500 uppercase tracking-wider mb-2">Nel mondo reale</div>
+                    <p id="info-example" class="text-slate-300 text-base md:text-lg leading-relaxed flex items-start gap-3">
+                        <span class="text-xl mt-0.5">🎮</span> 
+                        <span>Un hard disk da 1 Terabyte (TB) può contenere decine di videogiochi di ultima generazione.</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SFIDA -->
+        <section id="section-sfida" class="hidden p-6 md:p-8 flex-1 flex flex-col">
+            <div class="max-w-2xl mx-auto w-full">
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-white/90">Simulatore di Conversione</h3>
+                    <button onclick="initProblem()" class="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">
+                        Nuova Sfida ⟳
+                    </button>
+                </div>
+
+                <!-- Scheda Problema -->
+                <div class="bg-slate-900/40 rounded-2xl p-6 border border-white/10 text-center relative overflow-hidden mb-6">
+                    <p class="text-slate-400 text-sm uppercase tracking-widest mb-6">Converti il seguente valore</p>
+                    
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 text-3xl md:text-4xl font-mono mb-8">
+                        <span id="q-value" class="text-white font-bold bg-white/5 px-4 py-2 rounded-xl border border-white/10">--</span>
+                        <span id="q-from" class="text-blue-400 font-semibold">--</span>
+                        <span class="text-slate-500">→</span>
+                        <span id="q-to" class="text-emerald-400 font-semibold">--</span>
+                    </div>
+
+                    <div class="max-w-md mx-auto">
+                        <input type="text" id="answer-input" placeholder="Risultato (es: 1500 o 1.5e3)" class="w-full text-center text-xl font-mono p-4 rounded-xl glass-input mb-4" autocomplete="off">
+                        
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button onclick="checkAnswer()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                                Invia Risposta
+                            </button>
+                            <button onclick="toggleHint()" id="btn-hint" class="sm:w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3.5 rounded-xl border border-slate-600 transition-colors">
+                                Indizio? 💡
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Area Hint -->
+                <div id="hint-area" class="hidden mb-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-5 fade-in text-sm text-amber-200/90 leading-relaxed">
+                    <div class="flex items-start gap-3">
+                        <span class="text-xl">📍</span>
+                        <p id="hint-text">--</p>
+                    </div>
+                </div>
+
+                <!-- Area Feedback -->
+                <div id="feedback-area" class="hidden rounded-xl p-5 fade-in border">
+                    <!-- Javascript popolerà questo div -->
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- INIZIO JAVASCRIPT -->
+    <script>
+        // --- STREAMING_CHUNK:Configurazione Dati Base... ---
+        const prefixes = [
+            { id: 'T', name: 'Tera', exp: 12, icon: '🖥️', example: '1 Terabyte (TB) è la capienza di un hard disk moderno per console o PC.' },
+            { id: 'G', name: 'Giga', exp: 9, icon: '📱', example: '50 Giga (GB) è il traffico dati medio mensile di uno smartphone.' },
+            { id: 'M', name: 'Mega', exp: 6, icon: '📸', example: '12 Megapixel (MP) determinano la risoluzione della fotocamera del tuo telefono.' },
+            { id: 'k', name: 'kilo', exp: 3, icon: '🏃‍♂️', example: '1 chilometro (km) = 1000 metri, la distanza di una corsa leggera.' },
+            { id: 'h', name: 'etto', exp: 2, icon: '⚖️', example: '1 etto (hg) = 100 grammi, la tipica quantità di affettato al supermercato. Oppure l\'ettaro (hm²) per i terreni.' },
+            { id: 'da', name: 'deca', exp: 1, icon: '🏢', example: '1 decametro (dam) = 10 metri, circa l\'altezza di un palazzo di 3 piani.' },
+            { id: '', name: 'Base', exp: 0, icon: '📏', example: 'L\'unità di misura pura. Es: 1 metro (la tua altezza è circa 1.7m) o 1 grammo (il peso di una graffetta).' },
+            { id: 'd', name: 'deci', exp: -1, icon: '✋', example: '1 decimetro (dm) = 10 centimetri, all\'incirca la lunghezza del palmo di una mano.' },
+            { id: 'c', name: 'centi', exp: -2, icon: '🐝', example: '1 centimetro (cm) è circa la grandezza di un\'ape o la larghezza di un\'unghia.' },
+            { id: 'm', name: 'milli', exp: -3, icon: '💳', example: '1 millimetro (mm) equivale allo spessore di una carta di credito.' },
+            { id: 'µ', name: 'micro', exp: -6, icon: '🦠', example: '1 micrometro (µm) è la dimensione tipica di una cellula o di un batterio.' },
+            { id: 'n', name: 'nano', exp: -9, icon: '💻', example: '1 nanometro (nm) è la scala a cui sono costruiti i transistor dei moderni processori (CPU/GPU).' },
+            { id: 'p', name: 'pico', exp: -12, icon: '⚛️', example: '1 picometro (pm) ci porta nel mondo quantistico: è la dimensione di un atomo!' }
+        ];
+
+        let currentState = {
+            value: 0,
+            fromPref: null,
+            toPref: null,
+            expDiff: 0,
+            correctAnswer: 0
+        };
+
+        // --- STREAMING_CHUNK:Gestione UI e Navigazione... ---
+        function switchTab(tabId) {
+            document.getElementById('section-esplora').classList.add('hidden');
+            document.getElementById('section-sfida').classList.add('hidden');
+            
+            const btnE = document.getElementById('tab-esplora');
+            const btnS = document.getElementById('tab-sfida');
+            
+            btnE.className = "flex-1 py-5 text-sm md:text-base font-semibold text-white/70 hover:text-white hover:bg-glass transition-all border-b-2 border-transparent";
+            btnS.className = "flex-1 py-5 text-sm md:text-base font-semibold text-white/70 hover:text-white hover:bg-glass transition-all border-b-2 border-transparent";
+
+            if (tabId === 'esplora') {
+                document.getElementById('section-esplora').classList.remove('hidden');
+                btnE.classList.add('text-blue-400', 'border-blue-500', 'bg-glass-active');
+                btnE.classList.remove('text-white/70');
+            } else {
+                document.getElementById('section-sfida').classList.remove('hidden');
+                btnS.classList.add('text-emerald-400', 'border-emerald-500', 'bg-glass-active');
+                btnS.classList.remove('text-white/70');
+                if (currentState.value === 0) initProblem();
+            }
+        }
+
+        // --- STREAMING_CHUNK:Rendering Griglia Esplorazione... ---
+        function renderGrid() {
+            const grid = document.getElementById('prefix-grid');
+            grid.innerHTML = '';
+            
+            prefixes.forEach((pref, index) => {
+                const btn = document.createElement('button');
+                const isBase = pref.exp === 0;
+                
+                // Stili pulsante (Pill)
+                btn.className = `px-4 py-2 rounded-full font-mono text-sm transition-all border 
+                    ${isBase ? 'bg-white/10 border-white/30 text-white font-bold' : 'bg-glass border-glass-border text-slate-300 hover:bg-glass-hover'}`;
+                
+                btn.innerText = pref.name;
+                btn.onclick = () => showPrefixInfo(index, btn);
+                
+                grid.appendChild(btn);
+            });
+        }
+
+        function showPrefixInfo(index, clickedBtn) {
+            const pref = prefixes[index];
+            
+            // Reset active states su tutti i bottoni
+            const buttons = document.getElementById('prefix-grid').children;
+            for(let b of buttons) {
+                b.classList.remove('ring-2', 'ring-blue-400', 'bg-blue-500/20');
+            }
+            // Applica state attivo
+            clickedBtn.classList.add('ring-2', 'ring-blue-400', 'bg-blue-500/20');
+
+            // Aggiorna card
+            const card = document.getElementById('info-card');
+            card.classList.remove('hidden');
+            
+            // Riavvia animazione clonando l'elemento per ingannare il DOM
+            card.classList.remove('fade-in');
+            void card.offsetWidth; 
+            card.classList.add('fade-in');
+
+            document.getElementById('info-symbol').innerText = pref.id || '-';
+            document.getElementById('info-name').innerText = pref.name;
+            document.getElementById('info-exp').innerText = pref.exp;
+            
+            const pwrEl = document.getElementById('info-power');
+            pwrEl.className = `text-2xl md:text-3xl font-mono font-semibold ${pref.exp >= 0 ? 'text-emerald-400' : 'text-amber-400'}`;
+            if(pref.exp === 0) pwrEl.className = 'text-2xl md:text-3xl font-mono font-semibold text-white';
+
+            document.getElementById('info-example').innerHTML = `
+                <span class="text-xl mt-0.5">${pref.icon}</span> 
+                <span>${pref.example}</span>
+            `;
+        }
+
+        // --- STREAMING_CHUNK:Logica Generazione Sfide... ---
+        function initProblem() {
+            // Reset UI Sfida
+            const input = document.getElementById('answer-input');
+            input.value = '';
+            input.disabled = false;
+            input.classList.remove('border-emerald-500', 'border-red-500', 'shadow-[0_0_15px_rgba(16,185,129,0.3)]', 'shadow-[0_0_15px_rgba(239,68,68,0.3)]');
+            
+            document.getElementById('hint-area').classList.add('hidden');
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('btn-hint').disabled = false;
+            document.getElementById('btn-hint').classList.remove('opacity-50');
+
+            // Generazione indici casuali coerenti (escludiamo salti noiosi da 0 salti)
+            let startIdx, endIdx;
+            do {
+                startIdx = Math.floor(Math.random() * prefixes.length);
+                endIdx = Math.floor(Math.random() * prefixes.length);
+            } while (startIdx === endIdx);
+
+            currentState.fromPref = prefixes[startIdx];
+            currentState.toPref = prefixes[endIdx];
+            currentState.expDiff = currentState.fromPref.exp - currentState.toPref.exp;
+
+            // Valori di partenza "tech" o interessanti
+            const valori = [1.2, 2.5, 3, 5, 8.4, 12, 45, 120, 250, 500];
+            currentState.value = valori[Math.floor(Math.random() * valori.length)];
+
+            // Calcolo risposta esatta
+            const raw = currentState.value * Math.pow(10, currentState.expDiff);
+            currentState.correctAnswer = parseFloat(raw.toPrecision(12));
+
+            // Aggiorna interfaccia problema
+            document.getElementById('q-value').innerText = currentState.value;
+            // Aggiungiamo 'm' (metri) o 'B' (Byte) in modo casuale per dare sapore
+            const unitSuffix = Math.random() > 0.5 ? 'm' : 'B';
+            document.getElementById('q-from').innerText = currentState.fromPref.id + unitSuffix;
+            document.getElementById('q-to').innerText = currentState.toPref.id + unitSuffix;
+
+            input.focus();
+        }
+
+        // --- STREAMING_CHUNK:Gestione Indizi (Hints)... ---
+        function toggleHint() {
+            const hintArea = document.getElementById('hint-area');
+            const btn = document.getElementById('btn-hint');
+            
+            if (hintArea.classList.contains('hidden')) {
+                hintArea.classList.remove('hidden');
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                // Costruisci il testo dell'indizio
+                const diff = currentState.expDiff;
+                const absDiff = Math.abs(diff);
+                const isDiscesa = diff > 0;
+                
+                const startStr = `${currentState.fromPref.name} (10<sup>${currentState.fromPref.exp}</sup>)`;
+                const endStr = `${currentState.toPref.name} (10<sup>${currentState.toPref.exp}</sup>)`;
+                
+                let text = `Stai passando da <strong>${startStr}</strong> a <strong>${endStr}</strong>.<br>`;
+                
+                if (isDiscesa) {
+                    text += `Scendi lungo la scala verso le misure più piccole. La differenza di esponente è <strong>${absDiff}</strong>.<br>Devi <strong>moltiplicare</strong> il valore per 10<sup>${absDiff}</sup>.`;
+                } else {
+                    text += `Sali lungo la scala verso le misure più grandi. La differenza di esponente è <strong>${absDiff}</strong>.<br>Devi <strong>dividere</strong> il valore per 10<sup>${absDiff}</sup> (ovvero moltiplicare per 10<sup>-${absDiff}</sup>).`;
+                }
+
+                document.getElementById('hint-text').innerHTML = text;
+            }
+        }
+
+        // --- STREAMING_CHUNK:Controllo Risposta e Feedback... ---
+        function checkAnswer() {
+            const input = document.getElementById('answer-input');
+            const rawStr = input.value.trim().replace(',', '.');
+            if (rawStr === '') return;
+
+            const userVal = Number(rawStr);
+            const feedbackArea = document.getElementById('feedback-area');
+            feedbackArea.classList.remove('hidden', 'bg-emerald-900/40', 'border-emerald-500/50', 'bg-red-900/40', 'border-red-500/50');
+            
+            if (isNaN(userVal)) {
+                feedbackArea.classList.add('bg-red-900/40', 'border-red-500/50');
+                feedbackArea.innerHTML = `<p class="text-red-300">Errore: Formato non valido. Inserisci un numero (es: 1500 o 1.5e3).</p>`;
+                return;
+            }
+
+            // Controllo tolleranza per float
+            const isCorrect = userVal === currentState.correctAnswer || Math.abs((userVal - currentState.correctAnswer) / currentState.correctAnswer) < 1e-7;
+
+            // Reset classi input
+            input.classList.remove('border-emerald-500', 'border-red-500', 'shadow-[0_0_15px_rgba(16,185,129,0.3)]', 'shadow-[0_0_15px_rgba(239,68,68,0.3)]');
+
+            if (isCorrect) {
+                input.classList.add('border-emerald-500', 'shadow-[0_0_15px_rgba(16,185,129,0.3)]');
+                input.disabled = true;
+                
+                feedbackArea.classList.add('bg-emerald-900/40', 'border-emerald-500/50');
+                
+                // Formattazione per mostrare sia notazione standard (se piccolo) che scientifica
+                const ansStr = Math.abs(currentState.correctAnswer) >= 1e6 || Math.abs(currentState.correctAnswer) <= 1e-4 
+                    ? currentState.correctAnswer.toExponential() 
+                    : currentState.correctAnswer;
+
+                feedbackArea.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">✓</div>
+                        <div>
+                            <h4 class="text-emerald-400 font-bold text-lg">Missione Compiuta!</h4>
+                            <p class="text-emerald-200/70 text-sm">Il valore esatto calcolato dal sistema è <span class="font-mono bg-black/30 px-1 rounded">${ansStr}</span>.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                input.classList.add('border-red-500', 'shadow-[0_0_15px_rgba(239,68,68,0.3)]');
+                feedbackArea.classList.add('bg-red-900/40', 'border-red-500/50');
+                
+                feedbackArea.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xl">×</div>
+                        <div>
+                            <h4 class="text-red-400 font-bold text-lg">Dati non corretti.</h4>
+                            <p class="text-red-200/70 text-sm">Controlla l'esponente. Ricorda di usare il pulsante "Indizio?" se sei in difficoltà.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Tasto invio
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        // Setup iniziale
+        window.onload = () => {
+            renderGrid();
+            switchTab('esplora');
+            // Seleziona il primo elemento (Tera) all'avvio
+            setTimeout(() => {
+                const firstBtn = document.getElementById('prefix-grid').firstChild;
+                if(firstBtn) firstBtn.click();
+            }, 100);
+        };
+    </script>
+</body>
+</html>

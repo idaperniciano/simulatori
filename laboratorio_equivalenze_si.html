@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Equivalenze SI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                        },
+                        blue: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .tab-btn.active {
+            color: #0f172a;
+            border-bottom-color: #2563eb;
+            background-color: #f1f5f9;
+        }
+
+        /* Timeline Styles */
+        .timeline-connector {
+            width: 2px;
+            background-color: #cbd5e1;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        
+        .timeline-connector.jump-3 {
+            border-left: 2px dashed #94a3b8;
+            background-color: transparent;
+        }
+
+        /* Input styling for validation */
+        .input-correct {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #065f46 !important;
+        }
+        
+        .input-error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #991b1b !important;
+        }
+
+        .slide-down {
+            animation: slideDown 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans flex flex-col items-center py-8 px-4 md:px-8">
+
+    <header class="w-full max-w-5xl mb-8">
+        <div class="bg-slate-900 rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight mb-2">Laboratorio Sistema Internazionale</h1>
+                <p class="text-slate-400 font-medium">Analisi e calcolo delle equivalenze lineari (Tera → pico)</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 font-mono text-sm shadow-inner text-slate-300">
+                <span class="block text-xs text-slate-500 uppercase tracking-wider mb-1">Stato Sistema</span>
+                Unità base di riferimento: Metri (m)<br>
+                Precisione calcolo: Float 64-bit
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-200">
+            <button onclick="switchTab('theory')" id="tab-theory" class="tab-btn active flex-1 py-4 px-6 text-sm md:text-base font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-50">
+                <span class="flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Scala dei Prefissi
+                </span>
+            </button>
+            <button onclick="switchTab('practice')" id="tab-practice" class="tab-btn flex-1 py-4 px-6 text-sm md:text-base font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-50">
+                <span class="flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    Modulo Operativo
+                </span>
+            </button>
+        </div>
+
+        <!-- THEORY SECTION -->
+        <section id="section-theory" class="p-6 md:p-10">
+            <div class="max-w-3xl mx-auto">
+                <div class="mb-8 p-5 bg-blue-50 text-blue-900 rounded-xl border border-blue-100 flex gap-4 items-start">
+                    <svg class="w-6 h-6 flex-shrink-0 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <h3 class="font-bold mb-1">Analisi Strutturale della Scala SI</h3>
+                        <p class="text-sm leading-relaxed">
+                            La scala alterna salti di un ordine di grandezza (10¹) nella parte centrale, a salti di tre ordini di grandezza (10³) agli estremi. 
+                            <strong>Regola fondamentale:</strong> scendendo si moltiplica (esponente positivo), salendo si divide (esponente negativo).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Vertical Timeline Container -->
+                <div class="relative py-4" id="timeline-container">
+                    <!-- Javascript will inject the vertical scale here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PRACTICE SECTION -->
+        <section id="section-practice" class="hidden p-6 md:p-10 bg-slate-50">
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- Setup Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <label class="font-semibold text-slate-700 text-sm uppercase tracking-wider">Range Operativo:</label>
+                        <select id="practice-mode" onchange="initProblem()" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-mono">
+                            <option value="all">Completo (T ↔ p)</option>
+                            <option value="macro">Macro (T ↔ base)</option>
+                            <option value="micro">Micro (base ↔ p)</option>
+                            <option value="mixed_3">Solo salti 10³ (T, G, M, k, m, µ, n, p)</option>
+                        </select>
+                    </div>
+                    <button onclick="initProblem()" class="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Genera Nuovo
+                    </button>
+                </div>
+
+                <!-- Main Work Area -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Left Column: Problem & Input -->
+                    <div class="flex flex-col gap-6">
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
+                            <h2 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Converti la seguente grandezza</h2>
+                            
+                            <div class="font-mono text-3xl md:text-4xl text-slate-800 mb-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <span id="q-value" class="bg-slate-100 px-4 py-2 rounded-lg border border-slate-200"></span>
+                                <span id="q-from" class="font-bold text-blue-600"></span>
+                                <span class="text-slate-300">→</span>
+                                <span id="q-to" class="font-bold text-blue-600"></span>
+                            </div>
+
+                            <div class="relative">
+                                <input type="text" id="answer-input" placeholder="Es: 4.5e6 oppure 4500000" autocomplete="off" class="w-full text-center font-mono text-xl p-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all mb-4">
+                                
+                                <button onclick="checkAnswer()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2">
+                                    Verifica Risultato
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Result Feedback Box -->
+                        <div id="feedback-box" class="hidden rounded-2xl p-6 border"></div>
+                    </div>
+
+                    <!-- Right Column: Tools & Analysis -->
+                    <div class="flex flex-col gap-4">
+                        
+                        <!-- Tool 1: Analyze Jump -->
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                            <button onclick="toggleSection('analysis-content')" class="w-full p-4 text-left font-semibold text-slate-700 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Analisi del Salto
+                                </span>
+                                <svg id="analysis-icon" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="analysis-content" class="hidden p-6 border-t border-slate-100 bg-slate-50">
+                                <div class="font-mono text-sm space-y-4 text-slate-700">
+                                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                                        <span>Punto di partenza:</span>
+                                        <span id="analysis-start" class="font-bold bg-white px-2 py-1 rounded border border-slate-200"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                                        <span>Punto di arrivo:</span>
+                                        <span id="analysis-end" class="font-bold bg-white px-2 py-1 rounded border border-slate-200"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                                        <span>Differenza ordini (Esponente):</span>
+                                        <span id="analysis-diff" class="font-bold text-blue-600"></span>
+                                    </div>
+                                    <div class="pt-2">
+                                        <span class="block mb-1 text-slate-500">Operazione matematica:</span>
+                                        <div id="analysis-math" class="bg-slate-900 text-green-400 p-3 rounded-lg overflow-x-auto whitespace-nowrap"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tool 2: Example -->
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                            <button onclick="toggleSection('example-content')" class="w-full p-4 text-left font-semibold text-slate-700 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                                    Mostra Esempio Risolto
+                                </span>
+                                <svg id="example-icon" class="w-5 h-5 text-slate-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="example-content" class="hidden p-6 border-t border-slate-100 bg-amber-50/30">
+                                <p class="text-sm text-slate-700 mb-4">Ecco come si affronta un problema simile:</p>
+                                <div class="bg-white border border-slate-200 rounded-lg p-4 font-mono text-sm shadow-sm space-y-2 text-slate-800">
+                                    <p class="text-slate-500 uppercase text-xs font-sans tracking-wide">Esempio</p>
+                                    <p>Convertire: <strong>5.2 Mega-metri (Mm)</strong> in <strong>centimetri (cm)</strong></p>
+                                    <hr class="border-slate-100 my-2">
+                                    <p>1. Partenza (M): <span class="text-blue-600">10⁶</span></p>
+                                    <p>2. Arrivo (c): <span class="text-blue-600">10⁻²</span></p>
+                                    <p>3. Salto: 6 - (-2) = <span class="text-emerald-600 font-bold">8</span> (Scendo, moltiplico)</p>
+                                    <p>4. Calcolo: 5.2 × 10⁸</p>
+                                    <p>5. Risultato in notazione scientifica: <strong class="bg-emerald-100 text-emerald-800 px-2 rounded">5.2e8</strong> (oppure 520000000)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- DATA ---
+        const prefixes = [
+            { id: 'T', name: 'Tera', exp: 12 },
+            { id: 'G', name: 'Giga', exp: 9 },
+            { id: 'M', name: 'Mega', exp: 6 },
+            { id: 'k', name: 'kilo', exp: 3 },
+            { id: 'h', name: 'hecto', exp: 2 },
+            { id: 'da', name: 'deca', exp: 1 },
+            { id: '', name: 'Unità Base', exp: 0 },
+            { id: 'd', name: 'deci', exp: -1 },
+            { id: 'c', name: 'centi', exp: -2 },
+            { id: 'm', name: 'milli', exp: -3 },
+            { id: 'µ', name: 'micro', exp: -6 },
+            { id: 'n', name: 'nano', exp: -9 },
+            { id: 'p', name: 'pico', exp: -12 }
+        ];
+
+        let state = {
+            fromPrefix: null,
+            toPrefix: null,
+            value: 0,
+            correctAnswer: 0,
+            expDiff: 0
+        };
+
+        // --- UI UTILS ---
+        function switchTab(tab) {
+            document.getElementById('section-theory').classList.add('hidden');
+            document.getElementById('section-practice').classList.add('hidden');
+            document.getElementById('tab-theory').classList.remove('active');
+            document.getElementById('tab-practice').classList.remove('active');
+
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            if(tab === 'practice' && state.value === 0) {
+                initProblem();
+            }
+        }
+
+        function toggleSection(id) {
+            const el = document.getElementById(id);
+            const iconId = id.replace('content', 'icon');
+            const icon = document.getElementById(iconId);
+            
+            if(el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('slide-down');
+                icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('slide-down');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // --- STREAMING_CHUNK:Rendering the Vertical Timeline... ---
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+            
+            prefixes.forEach((pref, index) => {
+                const isBase = pref.exp === 0;
+                
+                // Determine if we need a connector line below this item
+                let connectorHTML = '';
+                if (index < prefixes.length - 1) {
+                    const nextPref = prefixes[index + 1];
+                    const expDiff = Math.abs(pref.exp - nextPref.exp);
+                    const isJump3 = expDiff === 3;
+                    const heightClass = isJump3 ? 'h-16' : 'h-8';
+                    const jumpClass = isJump3 ? 'jump-3' : '';
+                    
+                    connectorHTML = `
+                        <div class="relative w-full ${heightClass}">
+                            <div class="timeline-connector h-full ${jumpClass}"></div>
+                            <div class="absolute inset-0 flex items-center justify-end pr-[55%] lg:pr-[60%]">
+                                <span class="text-xs font-mono text-slate-400 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                    10<sup>${isJump3 ? '3' : '1'}</sup>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const itemHTML = `
+                    <div class="flex items-center justify-center relative z-10 w-full group">
+                        <!-- Exponent Label (Left) -->
+                        <div class="w-1/3 text-right pr-6 font-mono text-sm md:text-base ${isBase ? 'text-blue-600 font-bold' : 'text-slate-500'}">
+                            10<sup class="text-xs md:text-sm">${pref.exp}</sup>
+                        </div>
+                        
+                        <!-- Center Node -->
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold font-mono shadow-sm transition-transform group-hover:scale-110 
+                            ${isBase ? 'bg-blue-600 text-white border-2 border-blue-200' : 'bg-white text-slate-700 border-2 border-slate-200'}">
+                            ${pref.id || 'B'}
+                        </div>
+                        
+                        <!-- Name Label (Right) -->
+                        <div class="w-1/3 pl-6 font-semibold text-sm md:text-base ${isBase ? 'text-blue-600' : 'text-slate-700'}">
+                            ${pref.name}
+                        </div>
+                    </div>
+                    ${connectorHTML}
+                `;
+                
+                container.insertAdjacentHTML('beforeend', itemHTML);
+            });
+        }
+
+        // --- STREAMING_CHUNK:Implementing Math and Problem Generation Logic... ---
+        function formatScientific(num) {
+            // Se il numero è tra 0.001 e 100000, lo mostriamo standard, altrimenti sci notation.
+            if (num === 0) return "0";
+            const abs = Math.abs(num);
+            if (abs >= 1e5 || abs <= 1e-4) {
+                return num.toExponential().replace('e+', 'e');
+            }
+            // Fix precision issues from float math
+            return parseFloat(num.toPrecision(12)).toString();
+        }
+
+        function initProblem() {
+            const mode = document.getElementById('practice-mode').value;
+            let availableIndices = [];
+            
+            // Filter available prefixes based on mode
+            prefixes.forEach((p, idx) => {
+                if (mode === 'all') availableIndices.push(idx);
+                else if (mode === 'macro' && p.exp >= 0) availableIndices.push(idx);
+                else if (mode === 'micro' && p.exp <= 0) availableIndices.push(idx);
+                else if (mode === 'mixed_3' && (p.exp % 3 === 0)) availableIndices.push(idx);
+            });
+
+            // Select random start and end
+            let startIdx, endIdx;
+            do {
+                startIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                endIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            } while (startIdx === endIdx);
+
+            state.fromPrefix = prefixes[startIdx];
+            state.toPrefix = prefixes[endIdx];
+            state.expDiff = state.fromPrefix.exp - state.toPrefix.exp;
+
+            // Genera numero (es. 4.5, 12, 0.5)
+            const baseValues = [1.5, 2, 3.2, 4, 5.5, 7, 8.4, 9, 12, 25, 45, 150];
+            state.value = baseValues[Math.floor(Math.random() * baseValues.length)];
+
+            // Calcolo risultato esatto
+            const rawAns = state.value * Math.pow(10, state.expDiff);
+            state.correctAnswer = parseFloat(rawAns.toPrecision(12));
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // Reset input and feedback
+            const input = document.getElementById('answer-input');
+            input.value = '';
+            input.disabled = false;
+            input.classList.remove('input-correct', 'input-error');
+            document.getElementById('feedback-box').classList.add('hidden');
+            
+            // Close tools
+            document.getElementById('analysis-content').classList.add('hidden');
+            document.getElementById('analysis-icon').classList.remove('rotate-180');
+            
+            // Set problem text
+            document.getElementById('q-value').innerText = state.value;
+            document.getElementById('q-from').innerText = state.fromPrefix.id + 'm';
+            document.getElementById('q-to').innerText = state.toPrefix.id + 'm';
+
+            // Populate Analysis tool data
+            document.getElementById('analysis-start').innerHTML = `${state.fromPrefix.name} (10<sup>${state.fromPrefix.exp}</sup>)`;
+            document.getElementById('analysis-end').innerHTML = `${state.toPrefix.name} (10<sup>${state.toPrefix.exp}</sup>)`;
+            
+            const diffSign = state.expDiff > 0 ? '+' : '';
+            document.getElementById('analysis-diff').innerText = `${state.fromPrefix.exp} - (${state.toPrefix.exp}) = ${diffSign}${state.expDiff}`;
+            
+            const opDesc = state.expDiff > 0 ? 'Moltiplica' : 'Dividi';
+            document.getElementById('analysis-math').innerText = `${state.value} × 10^(${state.expDiff})  // ${opDesc} spostando la virgola`;
+
+            input.focus();
+        }
+
+        // --- STREAMING_CHUNK:Implementing Validation and Feedback... ---
+        function checkAnswer() {
+            const input = document.getElementById('answer-input');
+            const userStr = input.value.trim().replace(',', '.'); // Allow comma as decimal separator
+            
+            if (!userStr) return;
+
+            const userNum = Number(userStr);
+            const fBox = document.getElementById('feedback-box');
+            
+            fBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-red-50', 'border-red-200');
+            
+            // Validazione input fallito
+            if (isNaN(userNum)) {
+                fBox.classList.add('bg-amber-50', 'border-amber-200');
+                fBox.innerHTML = `
+                    <div class="flex items-center gap-3 text-amber-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <strong>Errore di formato:</strong> Inserisci un numero valido. Puoi usare la notazione scientifica (es. 1.5e4).
+                    </div>
+                `;
+                return;
+            }
+
+            // Confronto con tolleranza (errore relativo)
+            const tolerance = 1e-5;
+            const isCorrect = state.correctAnswer === 0 
+                ? userNum === 0 
+                : Math.abs((userNum - state.correctAnswer) / state.correctAnswer) < tolerance;
+
+            if (isCorrect) {
+                input.classList.add('input-correct');
+                input.classList.remove('input-error');
+                input.disabled = true; // Lock input on success
+                
+                fBox.classList.add('bg-emerald-50', 'border-emerald-200', 'slide-down');
+                fBox.innerHTML = `
+                    <div class="flex items-center gap-3 text-emerald-800 mb-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h4 class="font-bold text-lg">Esatto!</h4>
+                    </div>
+                    <p class="text-sm text-emerald-700 font-mono">Valore riconosciuto dal sistema: ${formatScientific(state.correctAnswer)}</p>
+                    <button onclick="initProblem()" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">Passa al prossimo test →</button>
+                `;
+            } else {
+                input.classList.add('input-error');
+                
+                // Determine a constructive hint
+                let hint = "Controlla il segno dell'esponente.";
+                const diffZeros = Math.log10(Math.abs(userNum / state.correctAnswer));
+                if (Math.abs(Math.round(diffZeros) - diffZeros) < 0.001) {
+                    const z = Math.round(diffZeros);
+                    hint = `Sembra che tu abbia sbagliato l'esponente di <strong class="font-mono">${Math.abs(z)}</strong> posizioni.`;
+                } else if (userNum === state.value * Math.pow(10, -state.expDiff)) {
+                    hint = "Hai fatto l'operazione inversa! Controlla se stai salendo o scendendo lungo la scala.";
+                }
+
+                fBox.classList.add('bg-red-50', 'border-red-200', 'slide-down');
+                fBox.innerHTML = `
+                    <div class="flex items-center gap-3 text-red-800 mb-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h4 class="font-bold text-lg">Valore non corretto</h4>
+                    </div>
+                    <p class="text-sm text-red-700 mb-3">${hint}</p>
+                    <p class="text-xs text-red-600"><em>Suggerimento: usa il pannello "Analisi del salto" per scomporre il problema.</em></p>
+                `;
+            }
+        }
+
+        // Listen for Enter key
+        document.getElementById('answer-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            renderTimeline();
+        };
+    </script>
+</body>
+</html>
