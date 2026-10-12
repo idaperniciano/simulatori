@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palestra: Ettaro e Litro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        
+        .input-challenge {
+            border: 3px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            outline: none;
+            transition: all 0.2s;
+            width: 180px;
+            background-color: #ffffff;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .input-challenge:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .input-challenge.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .input-challenge.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex justify-center pb-24">
+
+    <div class="w-full max-w-5xl space-y-8">
+        
+        <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-200 text-center">
+            <h1 class="text-3xl font-extrabold text-slate-800">Allenamento Attivo: Ettari e Litri</h1>
+            <p class="text-slate-500 font-medium mt-2">Risolvi le equivalenze. Ricorda: usa sempre la virgola!</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- MODULO 1: ETTARO -->
+            <div class="bg-white rounded-3xl shadow-lg border-2 border-emerald-500 overflow-hidden flex flex-col">
+                <div class="bg-emerald-500 p-3 text-white text-center">
+                    <h2 class="text-xl font-extrabold">🌾 Sfida Superfici (Ettaro)</h2>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <!-- Promemoria Visivo -->
+                    <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-4 text-center mb-8">
+                        <div class="text-emerald-800 font-bold text-lg mb-1">Regola d'oro:</div>
+                        <div class="text-emerald-900 mono text-xl font-black bg-white inline-block px-4 py-2 rounded-lg shadow-sm">1 ha = 10 000 m²</div>
+                    </div>
+
+                    <!-- Area Sfida -->
+                    <div class="text-center space-y-6">
+                        <div class="text-slate-500 font-bold uppercase tracking-wider text-sm">Converti il seguente valore:</div>
+                        
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-2xl font-bold text-slate-700">
+                            <div class="bg-slate-100 px-6 py-4 rounded-2xl border border-slate-200 shadow-sm min-w-[160px]">
+                                <span id="q-val-ha" class="mono text-3xl text-slate-800">0</span> 
+                                <span id="q-unit1-ha" class="text-emerald-600">ha</span>
+                            </div>
+                            <div class="text-slate-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="ans-ha" class="input-challenge mono" placeholder="?">
+                                <span id="q-unit2-ha" class="text-emerald-600">m²</span>
+                            </div>
+                        </div>
+
+                        <!-- Feedback e Bottoni -->
+                        <div class="h-16 flex items-center justify-center pt-4">
+                            <button id="btn-check-ha" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-md transition-transform active:scale-95 w-full md:w-auto">
+                                Controlla Risposta
+                            </button>
+                            <button id="btn-next-ha" class="hidden bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-md transition-transform active:scale-95 w-full md:w-auto flex items-center justify-center gap-2">
+                                Bravo! Prossima Sfida <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- MODULO 2: LITRO E M3 -->
+            <div class="bg-white rounded-3xl shadow-lg border-2 border-blue-500 overflow-hidden flex flex-col">
+                <div class="bg-blue-500 p-3 text-white text-center">
+                    <h2 class="text-xl font-extrabold">💧 Sfida Volumi (Litri e m³)</h2>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <!-- Promemoria Visivo -->
+                    <div class="bg-blue-50 rounded-xl border border-blue-200 p-4 text-center mb-8 flex justify-center gap-4 flex-wrap">
+                        <div class="text-blue-900 mono font-bold bg-white px-3 py-2 rounded-lg shadow-sm border border-blue-100">1 m³ = 1000 L</div>
+                        <div class="text-blue-900 mono font-bold bg-white px-3 py-2 rounded-lg shadow-sm border border-blue-100">1 L = 1 dm³</div>
+                    </div>
+
+                    <!-- Area Sfida -->
+                    <div class="text-center space-y-6">
+                        <div class="text-slate-500 font-bold uppercase tracking-wider text-sm">Converti il seguente valore:</div>
+                        
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-2xl font-bold text-slate-700">
+                            <div class="bg-slate-100 px-6 py-4 rounded-2xl border border-slate-200 shadow-sm min-w-[160px]">
+                                <span id="q-val-vol" class="mono text-3xl text-slate-800">0</span> 
+                                <span id="q-unit1-vol" class="text-blue-600">m³</span>
+                            </div>
+                            <div class="text-slate-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="ans-vol" class="input-challenge mono" placeholder="?">
+                                <span id="q-unit2-vol" class="text-blue-600">L</span>
+                            </div>
+                        </div>
+
+                        <!-- Feedback e Bottoni -->
+                        <div class="h-16 flex items-center justify-center pt-4">
+                            <button id="btn-check-vol" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-md transition-transform active:scale-95 w-full md:w-auto">
+                                Controlla Risposta
+                            </button>
+                            <button id="btn-next-vol" class="hidden bg-slate-800 hover:bg-slate-900 text-white font-bold text-lg py-3 px-8 rounded-xl shadow-md transition-transform active:scale-95 w-full md:w-auto flex items-center justify-center gap-2">
+                                Bravo! Prossima Sfida <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // FILTRO VIRGOLA GLOBALE
+        document.querySelectorAll('.input-challenge').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\./g, ',');
+                val = val.replace(/[^0-9,\-\s]/g, '');
+                const parts = val.split(',');
+                if (parts.length > 2) val = parts[0] + ',' + parts.slice(1).join('');
+                e.target.value = val;
+                
+                // Rimuove gli stili di errore se l'utente ricomincia a scrivere
+                e.target.classList.remove('incorrect', 'correct');
+            });
+        });
+
+        function formatNum(num) {
+            return (Math.round(num * 100000) / 100000).toString().replace('.', ',');
+        }
+
+        // ====== LOGICA ETTARO ======
+        const logicHa = [
+            { u1: 'ha', u2: 'm²', fact: 10000, baseNums: [1.5, 2.8, 3, 0.5, 0.25, 12, 4.2] },
+            { u1: 'm²', u2: 'ha', fact: 0.0001, baseNums: [15000, 25000, 3000, 4500, 120000, 500, 8500] }
+        ];
+        
+        let currentAnsHa = 0;
+
+        function loadQuestionHa() {
+            const rule = logicHa[Math.floor(Math.random() * logicHa.length)];
+            const startVal = rule.baseNums[Math.floor(Math.random() * rule.baseNums.length)];
+            currentAnsHa = startVal * rule.fact;
+
+            document.getElementById('q-val-ha').textContent = formatNum(startVal);
+            document.getElementById('q-unit1-ha').innerHTML = rule.u1.replace('²', '<sup>2</sup>');
+            document.getElementById('q-unit2-ha').innerHTML = rule.u2.replace('²', '<sup>2</sup>');
+            
+            const input = document.getElementById('ans-ha');
+            input.value = '';
+            input.classList.remove('correct', 'incorrect');
+            input.disabled = false;
+            
+            document.getElementById('btn-check-ha').classList.remove('hidden');
+            document.getElementById('btn-next-ha').classList.add('hidden');
+        }
+
+        document.getElementById('btn-check-ha').addEventListener('click', () => {
+            const input = document.getElementById('ans-ha');
+            const userText = input.value.trim().replace(/\s/g, '');
+            if(userText === "") return;
+
+            const userNum = parseFloat(userText.replace(',', '.'));
+            const expectedNum = Math.round(currentAnsHa * 100000) / 100000;
+
+            if (userNum === expectedNum) {
+                input.classList.add('correct');
+                input.disabled = true;
+                document.getElementById('btn-check-ha').classList.add('hidden');
+                document.getElementById('btn-next-ha').classList.remove('hidden');
+            } else {
+                input.classList.add('incorrect');
+                setTimeout(() => input.classList.remove('incorrect'), 400); // Rimuove animazione scossa
+            }
+        });
+
+        document.getElementById('btn-next-ha').addEventListener('click', loadQuestionHa);
+
+
+        // ====== LOGICA VOLUMI ======
+        const logicVol = [
+            { u1: 'm³', u2: 'L', fact: 1000, baseNums: [1.5, 0.25, 3, 12, 4.5, 0.8] },
+            { u1: 'L', u2: 'm³', fact: 0.001, baseNums: [1500, 250, 3000, 12000, 4500, 50, 800] },
+            { u1: 'L', u2: 'dm³', fact: 1, baseNums: [25, 1.5, 0.4, 300, 12] },
+            { u1: 'dm³', u2: 'L', fact: 1, baseNums: [15, 2.8, 0.75, 450, 8] }
+        ];
+        
+        let currentAnsVol = 0;
+
+        function loadQuestionVol() {
+            const rule = logicVol[Math.floor(Math.random() * logicVol.length)];
+            const startVal = rule.baseNums[Math.floor(Math.random() * rule.baseNums.length)];
+            currentAnsVol = startVal * rule.fact;
+
+            document.getElementById('q-val-vol').textContent = formatNum(startVal);
+            document.getElementById('q-unit1-vol').innerHTML = rule.u1.replace('³', '<sup>3</sup>');
+            document.getElementById('q-unit2-vol').innerHTML = rule.u2.replace('³', '<sup>3</sup>');
+            
+            const input = document.getElementById('ans-vol');
+            input.value = '';
+            input.classList.remove('correct', 'incorrect');
+            input.disabled = false;
+            
+            document.getElementById('btn-check-vol').classList.remove('hidden');
+            document.getElementById('btn-next-vol').classList.add('hidden');
+        }
+
+        document.getElementById('btn-check-vol').addEventListener('click', () => {
+            const input = document.getElementById('ans-vol');
+            const userText = input.value.trim().replace(/\s/g, '');
+            if(userText === "") return;
+
+            const userNum = parseFloat(userText.replace(',', '.'));
+            const expectedNum = Math.round(currentAnsVol * 100000) / 100000;
+
+            if (userNum === expectedNum) {
+                input.classList.add('correct');
+                input.disabled = true;
+                document.getElementById('btn-check-vol').classList.add('hidden');
+                document.getElementById('btn-next-vol').classList.remove('hidden');
+            } else {
+                input.classList.add('incorrect');
+                setTimeout(() => input.classList.remove('incorrect'), 400); 
+            }
+        });
+
+        document.getElementById('btn-next-vol').addEventListener('click', loadQuestionVol);
+
+        // Inizializza le prime domande
+        loadQuestionHa();
+        loadQuestionVol();
+    </script>
+</body>
+</html>

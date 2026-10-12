@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allenamento Equivalenze - Superfici e Volumi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        
+        .q-input {
+            border: 2px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.2s;
+            width: 140px;
+        }
+        .q-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .q-input.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .q-input.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        
+        .unit-badge { display: inline-block; min-width: 60px; text-align: left; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex justify-center pb-24">
+
+    <div class="w-full max-w-4xl bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-slate-200">
+        
+        <!-- Intestazione -->
+        <div class="text-center mb-8 border-b-2 border-slate-100 pb-6">
+            <h1 class="text-3xl font-extrabold text-slate-800">Palestra: Superfici e Volumi</h1>
+            <p class="text-slate-500 font-medium mt-2">Allenamento con Ettari (ha) e Litri (L)</p>
+        </div>
+
+        <!-- Mappa Mentale (Aiuto Visivo) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <h3 class="font-bold text-amber-900 mb-2 uppercase text-sm tracking-wide">🟩 Regole per le Superfici (Area)</h3>
+                <ul class="text-amber-800 text-sm space-y-1 font-medium">
+                    <li>• Ogni salto vale <strong class="text-amber-600">100</strong> (sposta la virgola di 2 posti).</li>
+                    <li>• <strong class="mono text-base">1 ha</strong> (ettaro) = <strong class="mono text-base">1 hm²</strong></li>
+                    <li>• <strong class="mono text-base">1 ha</strong> = <strong class="mono text-base">10 000 m²</strong></li>
+                </ul>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h3 class="font-bold text-blue-900 mb-2 uppercase text-sm tracking-wide">🟦 Regole per i Volumi (Capacità)</h3>
+                <ul class="text-blue-800 text-sm space-y-1 font-medium">
+                    <li>• Ogni salto vale <strong class="text-blue-600">1000</strong> (sposta la virgola di 3 posti).</li>
+                    <li>• <strong class="mono text-base">1 L</strong> (litro) = <strong class="mono text-base">1 dm³</strong></li>
+                    <li>• <strong class="mono text-base">1 m³</strong> = <strong class="mono text-base">1000 L</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Contenitore Esercizi -->
+        <div class="space-y-10">
+            
+            <!-- Area Superfici -->
+            <section>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-amber-500 w-2 h-8 rounded-full"></div>
+                    <h2 class="text-2xl font-bold text-slate-800">Esercizi Superficie</h2>
+                </div>
+                <div id="container-superfici" class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <!-- Generato via JS -->
+                </div>
+            </section>
+
+            <!-- Area Volumi -->
+            <section>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-blue-500 w-2 h-8 rounded-full"></div>
+                    <h2 class="text-2xl font-bold text-slate-800">Esercizi Volume e Capacità</h2>
+                </div>
+                <div id="container-volumi" class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <!-- Generato via JS -->
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Tasti Azione -->
+        <div class="mt-12 pt-6 border-t border-slate-200 flex flex-col md:flex-row justify-center gap-4">
+            <button id="btn-controlla" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xl py-4 px-10 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+                ✅ Controlla Risposte
+            </button>
+            <button id="btn-rigenera" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold text-xl py-4 px-10 rounded-xl transition-transform active:scale-95 flex items-center justify-center gap-2">
+                🔄 Genera Nuova Scheda
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // REGOLE DI CONVERSIONE (Molt. = da grande a piccolo, Div. = da piccolo a grande)
+        const regoleSuperfici = [
+            { u1: "ha", u2: "m²", factor: 10000 },
+            { u1: "km²", u2: "ha", factor: 100 },
+            { u1: "ha", u2: "km²", factor: 0.01 }, // Speciale per evitare divisioni JS strane
+            { u1: "m²", u2: "cm²", factor: 10000 },
+            { u1: "m²", u2: "dm²", factor: 100 },
+            { u1: "dm²", u2: "cm²", factor: 100 },
+            { u1: "cm²", u2: "mm²", factor: 100 }
+        ];
+
+        const regoleVolumi = [
+            { u1: "m³", u2: "dm³", factor: 1000 },
+            { u1: "m³", u2: "L", factor: 1000 },
+            { u1: "L", u2: "mL", factor: 1000 },
+            { u1: "hL", u2: "L", factor: 100 }, // Molto usato in agraria
+            { u1: "dm³", u2: "cm³", factor: 1000 },
+            { u1: "L", u2: "dm³", factor: 1 }, // Equivalenza diretta
+            { u1: "mL", u2: "cm³", factor: 1 }  // Equivalenza diretta
+        ];
+
+        // Numeri base di partenza realistici
+        const baseNumbers = [0.5, 1.2, 1.5, 2.5, 3.8, 4, 5, 8, 12, 15, 25, 45, 50, 75, 120, 250, 300, 500];
+
+        function generaEsercizi() {
+            const contSuperfici = document.getElementById('container-superfici');
+            const contVolumi = document.getElementById('container-volumi');
+            
+            contSuperfici.innerHTML = '';
+            contVolumi.innerHTML = '';
+
+            // Genera 5 per superficie
+            for(let i=0; i<5; i++) {
+                contSuperfici.appendChild(creaRiga(regoleSuperfici, i+1));
+            }
+
+            // Genera 5 per volume
+            for(let i=0; i<5; i++) {
+                contVolumi.appendChild(creaRiga(regoleVolumi, i+6));
+            }
+
+            // Riapplica il listener per la virgola ai nuovi input
+            applicaFiltroVirgola();
+        }
+
+        function creaRiga(regole, id) {
+            // Scegli una regola a caso
+            const regola = regole[Math.floor(Math.random() * regole.length)];
+            const baseNum = baseNumbers[Math.floor(Math.random() * baseNumbers.length)];
+            
+            // Decidi casualmente la direzione (moltiplica o dividi)
+            const isMultiply = Math.random() > 0.5;
+            
+            let numStart, numAns, strU1, strU2;
+
+            if (isMultiply) {
+                numStart = baseNum;
+                numAns = baseNum * regola.factor;
+                strU1 = regola.u1;
+                strU2 = regola.u2;
+            } else {
+                numStart = baseNum * regola.factor;
+                numAns = baseNum;
+                strU1 = regola.u2;
+                strU2 = regola.u1;
+            }
+
+            // Arrotonda per evitare glitch di JS (es. 0.30000000004)
+            numStart = Math.round(numStart * 100000) / 100000;
+            numAns = Math.round(numAns * 100000) / 100000;
+
+            // Formattazione per la stampa (sostituisce il punto con la virgola)
+            const stringStart = numStart.toString().replace('.', ',');
+
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm text-lg md:text-xl";
+            
+            // Formattazione HTML (es. m2 diventa m<sup>2</sup>)
+            const formatUnit = (u) => u.replace('²', '<sup>2</sup>').replace('³', '<sup>3</sup>');
+
+            div.innerHTML = `
+                <div class="flex items-center gap-4 flex-1">
+                    <span class="font-bold text-slate-400 text-sm md:text-base w-6">${id}.</span>
+                    <span class="mono font-bold text-slate-700 text-right min-w-[80px]">${stringStart}</span>
+                    <span class="font-bold text-slate-500 unit-badge">${formatUnit(strU1)}</span>
+                    <span class="font-bold text-slate-400">=</span>
+                </div>
+                <div class="flex items-center gap-2 flex-1 justify-end relative">
+                    <input type="text" class="q-input mono" data-ans="${numAns}">
+                    <span class="font-bold text-slate-500 unit-badge pl-2">${formatUnit(strU2)}</span>
+                    <div class="risultato-corretto absolute -bottom-6 left-0 text-red-600 font-bold text-sm hidden">Esatto: ${numAns.toString().replace('.', ',')}</div>
+                </div>
+            `;
+            return div;
+        }
+
+        function applicaFiltroVirgola() {
+            document.querySelectorAll('.q-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    let val = e.target.value.replace(/\./g, ','); // Sostituisce punto con virgola
+                    val = val.replace(/[^0-9,\-\s]/g, ''); // Accetta solo numeri, virgola, meno e spazio
+                    const parts = val.split(',');
+                    if (parts.length > 2) val = parts[0] + ',' + parts.slice(1).join('');
+                    e.target.value = val;
+                });
+            });
+        }
+
+        // Correzione e Feedback
+        document.getElementById('btn-controlla').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.q-input');
+            let tuttiGiusti = true;
+
+            inputs.forEach(input => {
+                const userText = input.value.trim().replace(/\s/g, ''); // Rimuove spazi vuoti inseriti dallo studente
+                const userNum = parseFloat(userText.replace(',', '.')); // Converte la virgola in punto per il motore JS
+                const expectedNum = parseFloat(input.getAttribute('data-ans'));
+
+                input.classList.remove('correct', 'incorrect');
+                const labelEsatto = input.parentElement.querySelector('.risultato-corretto');
+                labelEsatto.classList.add('hidden');
+
+                if (userText === "") {
+                    // Campo lasciato vuoto
+                    input.classList.add('incorrect');
+                    tuttiGiusti = false;
+                } else if (userNum === expectedNum) {
+                    // Corretto
+                    input.classList.add('correct');
+                } else {
+                    // Errato
+                    input.classList.add('incorrect');
+                    labelEsatto.classList.remove('hidden'); // Mostra suggerimento
+                    tuttiGiusti = false;
+                }
+            });
+
+            if(tuttiGiusti) {
+                // Piccolo effetto visivo di successo
+                document.getElementById('btn-controlla').textContent = "🎉 Tutto Perfetto! 🎉";
+                setTimeout(() => {
+                    document.getElementById('btn-controlla').textContent = "✅ Controlla Risposte";
+                }, 3000);
+            }
+        });
+
+        document.getElementById('btn-rigenera').addEventListener('click', generaEsercizi);
+
+        // Genera la prima scheda all'avvio
+        generaEsercizi();
+    </script>
+</body>
+</html>

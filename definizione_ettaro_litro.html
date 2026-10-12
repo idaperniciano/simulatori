@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esplorazione: Ettaro e Litro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        
+        .input-explore {
+            border: 3px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            outline: none;
+            transition: all 0.2s;
+            width: 160px;
+            background-color: #ffffff;
+        }
+        .input-explore:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        
+        /* Animazione pulsazioni lievi per i risultati */
+        @keyframes pop { 0% { transform: scale(0.95); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .animate-pop { animation: pop 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex justify-center pb-24">
+
+    <div class="w-full max-w-5xl space-y-8">
+        
+        <!-- Intestazione -->
+        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-slate-200 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800">Cosa c'è dietro ai numeri?</h1>
+            <p class="text-slate-500 font-medium mt-3 text-lg">Tocca con mano il significato dell'Ettaro e del Litro prima di fare le equivalenze.</p>
+        </div>
+
+        <!-- MODULO ETTARO (SUPERFICIE) -->
+        <div class="bg-white rounded-3xl shadow-lg border-2 border-emerald-500 overflow-hidden">
+            <div class="bg-emerald-500 p-4 text-white text-center">
+                <h2 class="text-2xl font-extrabold flex items-center justify-center gap-2">
+                    <span class="text-3xl">🌾</span> Scopriamo l'Ettaro (ha)
+                </h2>
+            </div>
+            
+            <div class="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                
+                <!-- Spiegazione Visiva -->
+                <div class="bg-emerald-50 rounded-2xl border border-emerald-200 p-6 flex flex-col items-center text-center">
+                    <div class="w-48 h-48 bg-emerald-200 border-4 border-emerald-600 rounded-lg flex flex-col justify-between p-2 shadow-inner relative mb-4">
+                        <div class="text-emerald-700 font-bold self-center -mt-8 bg-emerald-50 px-2 rounded">Lato: 100 m</div>
+                        <div class="text-emerald-700 font-bold absolute -right-6 top-1/2 -translate-y-1/2 rotate-90 bg-emerald-50 px-2 rounded">Lato: 100 m</div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <span class="text-2xl font-black text-emerald-800">1 Ettaro</span>
+                        </div>
+                    </div>
+                    <p class="text-emerald-900 font-medium">Un ettaro è un quadrato con il lato lungo <strong class="font-bold">100 metri</strong>.</p>
+                    <p class="text-emerald-900 font-medium mt-2">Area = 100 m × 100 m = <strong class="font-bold text-xl">10.000 m²</strong></p>
+                </div>
+
+                <!-- Esploratore Interattivo -->
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <label class="block text-slate-700 font-bold mb-3 uppercase tracking-wider text-sm">Inserisci gli Ettari (ha)</label>
+                        <div class="flex items-center justify-center gap-3">
+                            <input type="text" id="input-ha" class="input-explore text-emerald-700" placeholder="es. 2,5">
+                            <span class="text-2xl font-black text-slate-400">ha</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                    </div>
+
+                    <div id="box-result-ha" class="bg-slate-100 rounded-2xl border border-slate-200 p-6 text-center opacity-50 transition-opacity">
+                        <div class="text-slate-500 font-bold mb-2">Il calcolo matematico:</div>
+                        <div id="math-ha" class="mono text-xl font-bold text-slate-700 mb-4 h-8">0 × 10 000</div>
+                        <div class="text-slate-500 font-bold mb-1">Superficie reale in metri quadrati:</div>
+                        <div class="flex items-baseline justify-center gap-2">
+                            <span id="result-ha" class="text-4xl md:text-5xl font-black text-emerald-600 mono tracking-tight">0</span>
+                            <span class="text-2xl font-bold text-emerald-800">m²</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- MODULO LITRO (VOLUME E CAPACITÀ) -->
+        <div class="bg-white rounded-3xl shadow-lg border-2 border-blue-500 overflow-hidden">
+            <div class="bg-blue-500 p-4 text-white text-center">
+                <h2 class="text-2xl font-extrabold flex items-center justify-center gap-2">
+                    <span class="text-3xl">💧</span> Scopriamo il Litro (L) e il m³
+                </h2>
+            </div>
+            
+            <div class="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                
+                <!-- Spiegazione Visiva -->
+                <div class="space-y-4">
+                    <!-- Cubo piccolo -->
+                    <div class="bg-blue-50 rounded-2xl border border-blue-200 p-4 flex items-center gap-6">
+                        <div class="w-16 h-16 bg-blue-400 border-2 border-blue-600 shadow-md shrink-0 flex items-center justify-center text-white font-black text-xl">1L</div>
+                        <div>
+                            <h3 class="font-bold text-blue-900 text-lg">Il "Cartone del latte"</h3>
+                            <p class="text-blue-800 text-sm">Un cubo di 10 cm di lato (<strong class="font-bold text-blue-900">1 decimetro cubo</strong>) contiene esattamente <strong class="font-bold text-blue-900">1 Litro</strong> d'acqua.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cubo grande -->
+                    <div class="bg-cyan-50 rounded-2xl border border-cyan-200 p-4 flex items-center gap-6">
+                        <div class="w-32 h-32 bg-cyan-200 border-4 border-cyan-500 shadow-md shrink-0 flex items-center justify-center flex-col relative">
+                            <div class="absolute inset-0 flex flex-wrap opacity-30">
+                                <!-- Griglia visiva finta -->
+                                <div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div>
+                                <div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div>
+                                <div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div><div class="w-1/3 h-1/3 border border-cyan-400"></div>
+                            </div>
+                            <span class="text-2xl font-black text-cyan-800 z-10">1 m³</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-cyan-900 text-lg">La Cisterna</h3>
+                            <p class="text-cyan-800 text-sm">Un <strong class="font-bold text-cyan-900">metro cubo</strong> è un cubo enorme di 1 metro di lato. Al suo interno ci stanno ben <strong class="font-bold text-cyan-900">1000 Litri</strong> (mille cartoni del latte!).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Esploratore Interattivo -->
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <label class="block text-slate-700 font-bold mb-3 uppercase tracking-wider text-sm">Inserisci il volume della cisterna (m³)</label>
+                        <div class="flex items-center justify-center gap-3">
+                            <input type="text" id="input-m3" class="input-explore text-cyan-700" placeholder="es. 4">
+                            <span class="text-2xl font-black text-slate-400">m³</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                    </div>
+
+                    <div id="box-result-m3" class="bg-slate-100 rounded-2xl border border-slate-200 p-6 text-center opacity-50 transition-opacity">
+                        <div class="text-slate-500 font-bold mb-2">Quanti litri contiene?</div>
+                        <div id="math-m3" class="mono text-xl font-bold text-slate-700 mb-4 h-8">0 × 1 000</div>
+                        <div class="flex items-baseline justify-center gap-2">
+                            <span id="result-m3" class="text-4xl md:text-5xl font-black text-blue-600 mono tracking-tight">0</span>
+                            <span class="text-2xl font-bold text-blue-800">Litri</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Funzione globale per formattare i numeri coi separatori delle migliaia e la virgola
+        function formatNumber(num) {
+            // Arrotonda per evitare glitch di JS e converte in stringa
+            let str = (Math.round(num * 100000) / 100000).toString();
+            str = str.replace('.', ','); // Punto -> Virgola
+            
+            // Aggiunge lo spazio per le migliaia sulla parte intera
+            let parts = str.split(',');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            return parts.join(',');
+        }
+
+        // Filtro generale per tutti gli input (forza virgola)
+        document.querySelectorAll('.input-explore').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\./g, ',');
+                val = val.replace(/[^0-9,]/g, ''); // Permette solo numeri e virgola
+                const parts = val.split(',');
+                if (parts.length > 2) val = parts[0] + ',' + parts.slice(1).join('');
+                e.target.value = val;
+            });
+        });
+
+        // --- LOGICA ETTARO ---
+        const inputHa = document.getElementById('input-ha');
+        const boxHa = document.getElementById('box-result-ha');
+        const mathHa = document.getElementById('math-ha');
+        const resultHa = document.getElementById('result-ha');
+
+        inputHa.addEventListener('input', () => {
+            const rawVal = inputHa.value.trim();
+            if (rawVal === "" || rawVal === ",") {
+                boxHa.classList.add('opacity-50');
+                mathHa.innerHTML = `0 × 10 000`;
+                resultHa.innerHTML = "0";
+                return;
+            }
+
+            boxHa.classList.remove('opacity-50');
+            
+            // Ripuliamo il dato per i calcoli interni (es "2,5" -> 2.5)
+            const calcVal = parseFloat(rawVal.replace(',', '.'));
+            const finalMq = calcVal * 10000;
+
+            // Trigger animazione CSS
+            resultHa.classList.remove('animate-pop');
+            void resultHa.offsetWidth; // resetta l'animazione
+            resultHa.classList.add('animate-pop');
+
+            mathHa.innerHTML = `${formatNumber(calcVal)} × 10 000`;
+            resultHa.innerHTML = formatNumber(finalMq);
+        });
+
+        // --- LOGICA LITRO/m³ ---
+        const inputM3 = document.getElementById('input-m3');
+        const boxM3 = document.getElementById('box-result-m3');
+        const mathM3 = document.getElementById('math-m3');
+        const resultM3 = document.getElementById('result-m3');
+
+        inputM3.addEventListener('input', () => {
+            const rawVal = inputM3.value.trim();
+            if (rawVal === "" || rawVal === ",") {
+                boxM3.classList.add('opacity-50');
+                mathM3.innerHTML = `0 × 1 000`;
+                resultM3.innerHTML = "0";
+                return;
+            }
+
+            boxM3.classList.remove('opacity-50');
+            
+            const calcVal = parseFloat(rawVal.replace(',', '.'));
+            const finalLiters = calcVal * 1000;
+
+            resultM3.classList.remove('animate-pop');
+            void resultM3.offsetWidth;
+            resultM3.classList.add('animate-pop');
+
+            mathM3.innerHTML = `${formatNumber(calcVal)} × 1 000`;
+            resultM3.innerHTML = formatNumber(finalLiters);
+        });
+    </script>
+</body>
+</html>
